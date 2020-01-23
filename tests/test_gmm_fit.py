@@ -4,17 +4,13 @@ from torch.nn.functional import softmax, log_softmax
 
 from fitting.gmm_fit import GaussianMixture
 from fitting.data_examples import exp_gauss, unif, tri, two_dists_mixed
-from functions.miscellanea import _write_nested
+from functions.miscellanea import _write_nested, _plotter, GridDisplay
 from matplotlib import pyplot as plt
 import seaborn as sns
 
-SEED = 12
+SEED = 0
 torch.manual_seed(SEED)
 np.random.seed(SEED)
-
-def plotter_(filepath):
-    callback = (lambda fp: plt.savefig(fp,dpi=100))
-    _write_nested(filepath,callback)
 
 # check cuda
 dtype = torch.cuda.FloatTensor if torch.cuda.is_available() else torch.FloatTensor
@@ -29,7 +25,7 @@ def data(N,dim=2):
         x = torch.stack((.5 + .4 * (t / 7) * t.cos(), .5 + .3 * t.sin()), 1)
         x = x + .02 * torch.randn(x.shape)
     elif dim==1:
-        x = two_dists_mixed(N,sampler=unif,mus=[-0.1,0.3])
+        x = two_dists_mixed(N,sampler=tri, mus=[-0.2,0.1])
         x = torch.from_numpy(x).view(-1,1)
 
     return x
@@ -48,6 +44,31 @@ num_iters = 500
 
 loss = np.zeros(num_iters)
 
+# display utilities
+display_its = [0, 10, 50, 100, 150, 250, 350, 499]
+# default num cols is 4
+nrows = len(display_its)//3+1  if len(display_its)%3 else len(display_its)//3
+display = GridDisplay(nrows=nrows, ncols=3)
+
+def callback(ax, iter, dim, low, up):
+    plt.pause(.05)
+    model.plot(x, ax=ax)
+    ax.set_title('Density, iter ' + str(iter))
+    #plt.axis("equal")
+    if dim==2:
+        plt.axis([0,1,0,1])
+    elif dim==1:
+        vals = data.numpy().ravel()
+        ax.hist(vals, bins=2*N//50, alpha=0.4,
+                color='royalblue', density=True, label="True Histogram")
+        sns.kdeplot(vals, label="KDE ",ax=ax)
+        plt.axis([low,up,0,2])
+        plt.legend()
+    plt.xticks([], []); plt.yticks([], [])
+    plt.tight_layout() ; plt.pause(.05)
+
+## Main training loop
+
 for iter in range(num_iters):
     optimizer.zero_grad()  # Reset the gradients (PyTorch syntax...).
     cost = model.neglog_likelihood(x)  # Cost to minimize.
@@ -58,23 +79,14 @@ for iter in range(num_iters):
     loss[iter] = cost.data.cpu().numpy()
 
     # sphinx_gallery_thumbnail_number = 6
-    if iter in [0, 10, 50, 100, 150, 250, 350, 499]:
-        plt.pause(.05)
-        plt.figure(figsize=(8,8))
-        model.plot(x)
-        plt.title('Density, iteration ' + str(iter), fontsize=20)
-        #plt.axis("equal")
-        if dim==2:
-            plt.axis([0,1,0,1])
-        elif dim==1:
-            vals = data.numpy().ravel()
-            plt.hist(vals, bins=2*N//50, alpha=0.4,
-                    color='royalblue', density=True, label="True Histogram")
-            sns.kdeplot(vals, label="KDE ")
-            plt.axis([low,up,0,1.5])
-            plt.legend()
-        plt.tight_layout() ; plt.pause(.05)
-        plotter_(f'./tests/data/fitting/gmm_fit_iter{iter}')
+    if iter in display_its:
+        display.add_plot(callback=(lambda ax: callback(ax,
+                                                    dim=dim,
+                                                    iter=iter,
+                                                    low=low,
+                                                    up=up)))
+
+display.savefig(f'./tests/data/fitting/gmm_fit_iter{iter}')
 
 qualifying_weights = (lambda t: [w for w in softmax(model.w, 0).detach().cpu().numpy() if w>t])
 ref = qualifying_weights(1e-04); avg = sum(ref)/len(ref)

@@ -90,15 +90,19 @@ class GaussianMixture(Module):
         #       through a soft, concave penalization on the class weights.
         return -log_likelihood + self.sparsity * softmax(self.w, 0).sqrt().mean()
 
-    def plot(self, sample):
+    def plot(self, sample, ax=None):
         """Displays the model."""
-        plt.clf()
+        if ax == None:
+            ax = plt
         if self.D==1:
             x = sample.data.cpu().numpy()
             mu, sigma = x.mean(), x.std()
             # for 1D plots
             line = torch.linspace(x.min(),x.max(),500).contiguous().type(dtype).view(-1,1)
-            sns.rugplot(x,color='k', lw=0.1, alpha=0.05, height=0.02)
+            if ax == plt:
+                sns.rugplot(x,color='k', lw=0.1, alpha=0.05, height=0.02)
+            else:
+                sns.rugplot(x,color='k', lw=0.1, alpha=0.05, height=0.02, ax=ax)
             heatmap = self.likelihoods(line)
             heatmap = heatmap.view(res, 1).data.cpu().numpy().ravel()
             # reshape as a "background" density and somewhat normalize
@@ -106,14 +110,15 @@ class GaussianMixture(Module):
             # integral approx with uniform grid on [0,1], delta/N spacing
             spacing = line_cpu.max() - line_cpu.min()
             heatmap /= (heatmap.mean()*spacing)
-            plt.fill_between(line_cpu,heatmap,0,color='r',alpha=0.4, label="GMM Estimate")
+            ax.fill_between(line_cpu,heatmap,0,color='r',alpha=0.4, label="GMM Estimate")
         if self.D==2:
             # Heatmap:
+            plt.gcf()
             heatmap = self.likelihoods(grid)
             heatmap = heatmap.view(res, res).data.cpu().numpy()  # reshape as a "background" image
 
             scale = np.amax(np.abs(heatmap[:]))
-            plt.imshow(-heatmap, interpolation='bilinear', origin='lower',
+            ax.imshow(-heatmap, interpolation='bilinear', origin='lower',
                        vmin=-scale, vmax=scale, cmap=cm.RdBu,
                        extent=(0, 1, 0, 1))
 
@@ -124,9 +129,9 @@ class GaussianMixture(Module):
             scale = np.amax(np.abs(log_heatmap[:]))
             levels = np.linspace(-scale, scale, 41)
 
-            plt.contour(log_heatmap, origin='lower', linewidths=1., colors="#C8A1A1",
+            ax.contour(log_heatmap, origin='lower', linewidths=1., colors="#C8A1A1",
                         levels=levels, extent=(0, 1, 0, 1))
 
             # Scatter plot of the dataset:
             xy = sample.data.cpu().numpy()
-            plt.scatter(xy[:, 0], xy[:, 1], 100 / len(xy), color='k')
+            ax.scatter(xy[:, 0], xy[:, 1], 100 / len(xy), color='k')

@@ -6,13 +6,13 @@ DEVICE = 'cuda:0' if torch.cuda.is_available() else 'cpu:0'
 def tensorize(scalar, device=DEVICE):
     return Tensor([scalar]).to(DEVICE)
 
-def DotProduct(X):
-    '''X contains vector observations X_i as rows'''
-    return X @ X.t()
+def DotProduct(X,Y):
+    '''X,Y contains vector observations X_i, Y_j as rows'''
+    return X @ Y.t()
 
 def PairwiseSqDist(X, tol=1e-06):
     ''' Computes norm(X_i - X_j)'''
-    XX = DotProduct(X)
+    XX = DotProduct(X,X)
     # compute diagonal more efficiently
     X2 = (X * X).sum(dim=1).unsqueeze(0)
     #careful, transpose AFTER expanding
@@ -20,7 +20,7 @@ def PairwiseSqDist(X, tol=1e-06):
     return D.abs()+tol
 
 class RBF(torch.nn.Module):
-    def __init__(self, precompute=False, bandwidth=1.0):
+    def __init__(self, precompute=False, bandwidth=1.0, **kwargs):
         super(RBF,self).__init__()
         self.bandwidth = tensorize(bandwidth)
         # whether to compute the pairwise dists
@@ -35,7 +35,7 @@ class RBF(torch.nn.Module):
         return (-self.bandwidth * G).exp()
 
 class Matern(torch.nn.Module):
-    def __init__(self,precompute=False, bandwidth=1.0, nu=1.5):
+    def __init__(self,precompute=False, bandwidth=1.0, nu=1.5, **kwargs):
         super(Matern,self).__init__()
         self.bandwidth = tensorize(bandwidth)
         self.nu = nu
@@ -59,7 +59,7 @@ class Matern(torch.nn.Module):
                                         2.5 impacractical")
 
 class RQ(torch.nn.Module):
-    def __init__(self, precompute=False, bandwidth=1.0, alpha=1.0):
+    def __init__(self, precompute=False, bandwidth=1.0, alpha=1.0, **kwargs):
         super(RQ,self).__init__()
         self.bandwidth = tensorize(bandwidth)
         self.alpha = tensorize(alpha)

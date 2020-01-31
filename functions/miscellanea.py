@@ -3,7 +3,9 @@ import pickle
 from pathlib import Path
 import argparse, os, gc, inspect
 import matplotlib.pyplot as plt
+import numpy as np
 import torch
+import imageio
 
 def ruled_print(string, rule_symbol='-'):
     sentences = string.split('\n')
@@ -51,6 +53,20 @@ class GridDisplay:
     def savefig(self,filepath, dpi=400):
         _plotter(filepath, dpi=dpi)
 
+def _generate_gif(filepath, data, callback, num_frames, dpi=100, fps=1):
+    fig, ax = plt.subplots()
+    fig.set_tight_layout(True)
+    images = [_plot_frame(i, data, callback, dpi=dpi) for i in range(num_frames)]
+    imageio.mimsave(filepath, images, fps=fps)
+
+def _plot_frame(i,data, callback, dpi, figsize=(10,5)):
+    fig, ax = plt.subplots(figsize=figsize, dpi=dpi)
+    # callback does the plotting job using data on ax at iteration i
+    callback(i,ax,data)
+    fig.canvas.draw()
+    image = np.frombuffer(fig.canvas.tostring_rgb(), dtype='uint8')
+    image  = image.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+    return image
 
 def _mult_reduce(intlist):
     res = 1;
@@ -62,7 +78,6 @@ def find_names(obj):
     frame = inspect.currentframe()
     for frame in iter(lambda: frame.f_back, None):
         frame.f_locals
-    obj_names = []
     for referrer in gc.get_referrers(obj):
         if isinstance(referrer, dict):
             for k, v in referrer.items():

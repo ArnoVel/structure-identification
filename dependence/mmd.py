@@ -74,7 +74,7 @@ class MMD(torch.nn.Module):
         # use scipy as no icdf gamma in torch
         self.alpha, self.beta = numpy(mean**2/var), numpy(n*var/mean)
         #print(f'mean: {mean}, var: {var}, alpha:{self.alpha}, beta:{self.beta}')
-        self.test_cdf = (lambda x: gamma.cdf(x, a=self.alpha, loc=0, scale=1/self.beta))
-        self.test_thresh = gamma.ppf(1-alpha, a=self.alpha, loc=0, scale=1/self.beta)
+        self.test_cdf = (lambda x: 1.0 - gamma.cdf(x, a=self.alpha, loc=0, scale=self.beta))
+        self.test_thresh = gamma.ppf(1-alpha, a=self.alpha, loc=0, scale=self.beta)
         self.gamma_test_stat = statistic # not the same as stat, it is n*MMD^2 biased
         return self.gamma_test_stat, self.test_thresh

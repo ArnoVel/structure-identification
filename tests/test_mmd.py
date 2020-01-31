@@ -67,7 +67,7 @@ def main(args):
 
     if args.save:
         # apparently program is run from the main folder
-        _pickle(save, './tests/data/mmd_test')
+        _pickle(save, './tests/data/mmd/mmd_test')
 
 if __name__ == '__main__':
     args = parser.parse_args()

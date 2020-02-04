@@ -10,5 +10,7 @@ The original code is in R, we attempt to translate it into a pytorch/numpy compa
 The black is the true function, the blue is the generic fit (all basis functions together),
 and the green each time is each basis function alone
 ### Toy Example, 13 basis functions
-
+Example one:  
+![](./slope_n_func_eq_13_two.png?raw=true)
+Exemple two:  
 ![](./slope_n_func_eq_13_two.png?raw=true)

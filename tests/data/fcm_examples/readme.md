@@ -1,6 +1,6 @@
 # Types of Cause Effect Pairs
-We work with bivariate random variables ![$(X,Y) \sim P_{X,Y}$](https://render.githubusercontent.com/render/math?math=%24(X%2CY)%20%5Csim%20P_%7BX%2CY%7D%24) generated as
-![$$ Y = f(X) + N,\qquad N\sim P_N,\; X\sim P_X$$](https://render.githubusercontent.com/render/math?math=%24%24%20Y%20%3D%20f(X)%20%2B%20N%2C%5Cqquad%20N%5Csim%20P_N%2C%5C%3B%20X%5Csim%20P_X%24%24)
+We work with bivariate random variables ![(X,Y) \sim P_{X,Y}](https://render.githubusercontent.com/render/math?math=(X%2CY)%20%5Csim%20P_%7BX%2CY%7D) generated as
+![Y = f(X) + N,\qquad N\sim P_N,\; X\sim P_X](https://render.githubusercontent.com/render/math?math=Y%20%3D%20f(X)%20%2B%20N%2C%5Cqquad%20N%5Csim%20P_N%2C%5C%3B%20X%5Csim%20P_X)
 In the above, we call
 * ![$X$](https://render.githubusercontent.com/render/math?math=%24X%24) **cause** variable,
 * ![$Y$](https://render.githubusercontent.com/render/math?math=%24Y%24) the **effect** variable.

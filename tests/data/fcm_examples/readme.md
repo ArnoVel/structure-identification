@@ -36,16 +36,17 @@ We sample random mechanisms ![$f\sim P_F$](https://render.githubusercontent.com/
 ### Matern 2.5 Shift/Scale/Amplitude Sums
 This name refers to a function of the form
 ![f(x) =  \sum_{i}^K a_i\cdot f_i\,(\mu_i + \sigma_i\cdot x)](https://render.githubusercontent.com/render/math?math=f(x)%20%3D%20%20%5Csum_%7Bi%7D%5EK%20a_i%5Ccdot%20f_i%5C%2C(%5Cmu_i%20%2B%20%5Csigma_i%5Ccdot%20x))
-with all the parameters ![\{K\}\cup\{a_i,\mu_i,\sigma_i,\lambda_i\}_i](https://render.githubusercontent.com/render/math?math=%5C%7BK%5C%7D%5Ccup%5C%7Ba_i%2C%5Cmu_i%2C%5Csigma_i%2C%5Clambda_i%5C%7D_i) are randomized (and ![\lambda_i](https://render.githubusercontent.com/render/math?math=%5Clambda_i) is the matern bandwidth)
+with all the parameters ![\{K\}\cup\{a_i,\mu_i,\sigma_i,\lambda_i\}_i](https://render.githubusercontent.com/render/math?math=%5C%7BK%5C%7D%5Ccup%5C%7Ba_i%2C%5Cmu_i%2C%5Csigma_i%2C%5Clambda_i%5C%7D_i) randomized (and ![\lambda_i](https://render.githubusercontent.com/render/math?math=%5Clambda_i) is the matern bandwidth)
 ![](./mechanism/matern_sums.png?raw=true)
 
 ### Sigmoid AM
+Sigmoidal functions of the type ![x\mapsto \dfrac{b\cdot(x+c)}{1+\lvert b\cdot(x+c)\rvert}](https://render.githubusercontent.com/render/math?math=x%5Cmapsto%20%5Cdfrac%7Bb%5Ccdot(x%2Bc)%7D%7B1%2B%5Clvert%20b%5Ccdot(x%2Bc)%5Crvert%7D)
 ![](./mechanism/sigmoid_am.png?raw=true)
 
 ### Tanh Shift/Scale/Amplitude Sums
 This name refers to a function of the form
 ![f(x) = \sum_{i}^K a_i\cdot f_i(\b_i\cdot(x+c_i))](https://render.githubusercontent.com/render/math?math=f(x)%20%3D%20%5Csum_%7Bi%7D%5EK%20a_i%5Ccdot%20f_i(%5Cb_i%5Ccdot(x%2Bc_i)))
-with all the parameters ![\{K\}\cup\{a_i,\b_i,\c_i\}_i](https://render.githubusercontent.com/render/math?math=%5C%7BK%5C%7D%5Ccup%5C%7Ba_i%2C%5Cb_i%2C%5Cc_i%5C%7D_i) are randomized
+with all the parameters ![\{K\}\cup\{a_i,\b_i,\c_i\}_i](https://render.githubusercontent.com/render/math?math=%5C%7BK%5C%7D%5Ccup%5C%7Ba_i%2C%5Cb_i%2C%5Cc_i%5C%7D_i) randomized
 ![](./mechanism/tanh_sum.png?raw=true)
 
 # Acknowledgments

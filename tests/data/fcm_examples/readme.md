@@ -46,7 +46,8 @@ Sigmoidal functions of the type ![x\mapsto \dfrac{b\cdot(x+c)}{1+\lvert b\cdot(x
 ### Tanh Shift/Scale/Amplitude Sums
 This name refers to a function of the form
 ![f(x) = \sum_{i}^K a_i\cdot f_i(\b_i\cdot(x+c_i))](https://render.githubusercontent.com/render/math?math=f(x)%20%3D%20%5Csum_%7Bi%7D%5EK%20a_i%5Ccdot%20f_i(%5Cb_i%5Ccdot(x%2Bc_i)))
-with all the parameters ![\{K\}\cup\{a_i,\b_i,\c_i\}_i](https://render.githubusercontent.com/render/math?math=%5C%7BK%5C%7D%5Ccup%5C%7Ba_i%2C%5Cb_i%2C%5Cc_i%5C%7D_i) randomized
+with all the parameters ![\{K\}\cup\{a_i,\b_i,\c_i\}_i](https://render.githubusercontent.com/render/math?math=%5C%7BK%5C%7D%5Ccup%5C%7Ba_i%2C%5Cb_i%2C%5Cc_i%5C%7D_i) randomized.  
+
 ![](./mechanism/tanh_sum.png?raw=true)
 
 # Acknowledgments

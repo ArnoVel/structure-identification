@@ -1,6 +1,8 @@
 # Types of Cause Effect Pairs
-We work with bivariate random variables ![(X,Y) \sim P_{X,Y}](https://render.githubusercontent.com/render/math?math=(X%2CY)%20%5Csim%20P_%7BX%2CY%7D) generated as
-![Y = f(X) + N,\qquad N\sim P_N,\; X\sim P_X](https://render.githubusercontent.com/render/math?math=Y%20%3D%20f(X)%20%2B%20N%2C%5Cqquad%20N%5Csim%20P_N%2C%5C%3B%20X%5Csim%20P_X)
+We work with bivariate random variables ![(X,Y) \sim P_{X,Y}](https://render.githubusercontent.com/render/math?math=(X%2CY)%20%5Csim%20P_%7BX%2CY%7D) generated as  
+
+![Y = f(X) + N,\qquad N\sim P_N,\; X\sim P_X](https://render.githubusercontent.com/render/math?math=Y%20%3D%20f(X)%20%2B%20N%2C%5Cqquad%20N%5Csim%20P_N%2C%5C%3B%20X%5Csim%20P_X)  
+
 In the above, we call
 * ![$X$](https://render.githubusercontent.com/render/math?math=%24X%24) **cause** variable,
 * ![$Y$](https://render.githubusercontent.com/render/math?math=%24Y%24) the **effect** variable.
@@ -45,3 +47,6 @@ This name refers to a function of the form
 ![f(x) = \sum_{i}^K a_i\cdot f_i(\b_i\cdot(x+c_i))](https://render.githubusercontent.com/render/math?math=f(x)%20%3D%20%5Csum_%7Bi%7D%5EK%20a_i%5Ccdot%20f_i(%5Cb_i%5Ccdot(x%2Bc_i)))
 with all the parameters ![\{K\}\cup\{a_i,\b_i,\c_i\}_i](https://render.githubusercontent.com/render/math?math=%5C%7BK%5C%7D%5Ccup%5C%7Ba_i%2C%5Cb_i%2C%5Cc_i%5C%7D_i) are randomized
 ![](./mechanism/tanh_sum.png?raw=true)
+
+# Acknowledgments
+[This clever hack](https://alexanderrodin.com/github-latex-markdown/?math=(X%2CY)%20%5Csim%20P_%7BX%2CY%7D) allows one to change latex code to markdown-rendered images

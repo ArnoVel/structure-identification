@@ -29,19 +29,19 @@ In the above, we call
 ## Mechanisms
 We sample random mechanisms $f\sim P_F$, where $F$ corresponds to one of the following families
 ### Cubic Splines
-![](./cause/cubic_spline.png?raw=true)
+![](./mechanism/cubic_spline.png?raw=true)
 
 ### Matern 2.5 Shift/Scale/Amplitude Sums
 This name refers to a function of the form
 $$ f(x) = \sum_{i}^K a_i\cdot f_i(\mu_i + \sigma_i\cdot x) $$
 with all the parameters $\{K\}\cup\{a_i,\mu_i,\sigma_i,\lambda_i\}_i$ are randomized (and $\lambda_i$ is the matern bandwidth)
-![](./cause/matern_sums.png?raw=true)
+![](./mechanism/matern_sums.png?raw=true)
 
 ### Sigmoid AM
-![](./cause/sigmoid_am.png?raw=true)
+![](./mechanism/sigmoid_am.png?raw=true)
 
 ### Tanh Shift/Scale/Amplitude Sums
 This name refers to a function of the form
 $$ f(x) = \sum_{i}^K a_i\cdot f_i(\b_i\cdot(x+c_i)) $$
-with all the parameters $\{K\}\cup\{a_i,\b_i,\b_i,\lambda_i\}_i$ are randomized 
-![](./cause/tanh_sum.png?raw=true)
+with all the parameters $\{K\}\cup\{a_i,\b_i,\b_i,\lambda_i\}_i$ are randomized
+![](./mechanism/tanh_sum.png?raw=true)

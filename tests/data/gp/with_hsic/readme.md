@@ -52,3 +52,6 @@ Examples where the p-value of the hsic-gamma is intuitively low at first
 ### Conclusion
 
 This is the best case scenario.
+
+# Acknowledgments
+[This clever hack](https://alexanderrodin.com/github-latex-markdown/?math=(X%2CY)%20%5Csim%20P_%7BX%2CY%7D) allows one to change latex code to markdown-rendered images

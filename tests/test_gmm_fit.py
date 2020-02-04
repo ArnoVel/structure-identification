@@ -78,7 +78,6 @@ for iter in range(num_iters):
 
     loss[iter] = cost.data.cpu().numpy()
 
-    # sphinx_gallery_thumbnail_number = 6
     if iter in display_its:
         display.add_plot(callback=(lambda ax: callback(ax,
                                                     dim=dim,

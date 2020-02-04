@@ -11,7 +11,7 @@ def kernel_list_(kernels,params):
     return [ker(**p, precompute=True) for (ker,p) in zip(kernels,params)]
 
 class HSIC(torch.nn.Module):
-    def __init__(self,n,
+    def __init__(self,n, normalize=False,
                     kernels_X=None, params_X=None,
                     kernels_Y=None, params_Y=None,
                     unbiased=False, device=DEVICE):
@@ -34,11 +34,14 @@ class HSIC(torch.nn.Module):
                                                           params=params_Y))
 
         self.unbiased = unbiased
-        self.n = n
+        self.n = n ; self.normalize = normalize
 
     def forward(self,X,Y):
         if X.shape[0]!=self.n or Y.shape[0]!=self.n:
             raise ValueError("Number of samples should be equal",X.shape,Y.shape)
+
+        if self.normalize:
+            X = (X - X.mean(0))/X.std(0) ; Y = (Y-Y.mean(0))/Y.std(0)
 
         self.K_X, self.K_Y = self.KerF_X(X), self.KerF_Y(Y)
         # following https://arxiv.org/pdf/1406.3852.pdf,

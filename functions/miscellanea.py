@@ -37,9 +37,15 @@ def _plotter(filepath, dpi=400):
     _write_nested(filepath,callback)
 
 class GridDisplay:
-    def __init__(self, nrows, ncols=4, rowsize=4, colsize=4):
+    def __init__(self, num_items, nrows, ncols=4, rowsize=4, colsize=4):
+        if nrows == -1:
+            nrows = num_items//ncols +1 if num_items%ncols else num_items//ncols
+        if nrows * ncols < num_items:
+            raise ValueError(f"Cannot fit {num_items} items in a ({nrows},{ncols}) shape")
+
         self.nrows, self.ncols, self.k = nrows, ncols, 1
-        plt.figure(figsize=(colsize*ncols,rowsize*nrows))
+        print(ncols,nrows, ncols*colsize, nrows*rowsize)
+        self.fig = plt.figure(figsize=(colsize*ncols,rowsize*nrows))
 
     def add_plot(self,callback):
         ''' assumes callback takes axis as argument and does the

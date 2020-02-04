@@ -1,5 +1,7 @@
 import numpy as np
 import scipy as sp
+from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn.gaussian_process.kernels import Matern,WhiteKernel,DotProduct
 import scipy.interpolate as itpl
 import numpy.random as rd
 import pandas as pd
@@ -81,7 +83,7 @@ class  CauseSampler(object):
         """
         if not n_classes:
             n_classes = rd.randint(1,6)
-        supergaussian_pow = [1.1+0.1*i for i in range(n_classes)]
+        pow_vals_ = np.linspace(0,0.7,n_classes) + 1.05
 
         # generate shape and scale parameters of subgaussians from gaussians
         s1, s2 = rd.uniform(0,5,2)
@@ -92,7 +94,7 @@ class  CauseSampler(object):
         mixt_weights = mixt_weights / sum(mixt_weights)
 
         cause = _powgauss_mixture_sampler(self.n, mixt_weights,
-                                        powers=supergaussian_pow,
+                                        powers=pow_vals_,
                                         means=means, stds=stds)
         cause = (cause - cause.mean())/cause.std()
 
@@ -105,9 +107,10 @@ class  CauseSampler(object):
         if not n_classes:
             n_classes = rd.randint(1,6)
         # base powers from 0.3 to 2.3
-        powers = np.array([0.3+0.1*i for i in range(20)])
+        pow_vals_ = np.linspace(0,1.4,20) + 0.3
+
         #randomly sample n_classes powers from this array
-        powers = rd.choice(powers,size=n_classes,replace=False)
+        powers = rd.choice(pow_vals_,size=n_classes,replace=False)
         # generate shape and scale parameters of subgaussians from gaussians
         s1, s2 = rd.uniform(0,5,2)
         means = rd.normal(0,s1, size=n_classes)
@@ -158,6 +161,36 @@ class MechanismSampler(object):
 
         return (lambda x:
                     b*(x+c)/(1+np.abs(b*(x+c))))
+
+    def MaternGP(self, bounds=(5,20)):
+        ''' draws from gp priors Matern 2.5,
+            length scales from [4,10] for regularity
+        '''
+        nu = 2.5 ; ls = rd.uniform(*bounds,3)
+        self._ls = ls
+        gps = [GaussianProcessRegressor(alpha=1e-02,
+                            kernel=(Matern(nu=2.5, length_scale=l))
+                            ) for l in ls]
+        locs, scales = rd.normal(0,5,(len(gps),)), np.abs(rd.normal(0,5,(len(gps),)))
+
+        def fun(X):
+            res = np.zeros(X[:,np.newaxis].shape)
+            for i,gp in enumerate(gps):
+                res += gp.sample_y(locs[i]+scales[i]*X[:,np.newaxis],1)
+            return (res / len(gps)).ravel()
+        return fun
+
+    def tanhSum(self):
+        num_tanhs = np.random.randint(3,10)
+        s1,s2,s3 = np.abs(np.random.normal(0,5,3))
+        a,b,c = np.abs(0.5+np.random.normal(0,s1,num_tanhs)),\
+                np.abs(0.5+np.random.normal(0,s2,num_tanhs)),\
+                np.random.normal(0,s3,num_tanhs)
+        def fun(X):
+            d = X.reshape(-1,1) + c.reshape(1,-1)
+            # once we have [N,num_tanhs] , the broadcasting will be automatic
+            return (np.tanh(b*d)*a).sum(1) + X*1e-02
+        return fun
 
 class NoiseSampler(object):
     """ Given X and Y, generates noise N,

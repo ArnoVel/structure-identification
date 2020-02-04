@@ -44,7 +44,7 @@ Examples where the p-value of the hsic-gamma is intuitively low at first
 ![](./intuitive/one/prefit.png?raw=true)
 
 ### With NLL hyperparameter fitting
-![](.nintuitive/one/postfit_nll.png?raw=true)
+![](./intuitive/one/postfit_nll.png?raw=true)
 
 ### With HSIC+NLL hyperparameter fitting
 ![](./intuitive/one/postfit_hsic.png?raw=true)

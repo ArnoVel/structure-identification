@@ -29,3 +29,13 @@ allowing backpropagation w.r.t each inputs/parameters.
   Although the HSIC test is differentiable wrt all inputs, our implementation doesn't yet support hyperparameter fitting.
 
 * Examples of 2D gaussian HSIC-Gamma test, and ANM-detection tests will be uploaded.
+
+### MMD
+
+* PyTorch [MMD Test](dependence/mmd.py) with Gamma Approximation.
+
+## Bivariate Causal Algorithms
+
+### SLOPE
+
+We are currently implementing SLOPE in python, allowing both Numpy & PyTorch datatypes.

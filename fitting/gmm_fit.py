@@ -9,12 +9,7 @@ import seaborn as sns
 
 dtype = torch.cuda.FloatTensor if torch.cuda.is_available() else torch.FloatTensor
 # DISPLAY CONSTANTS
-# Create a uniform grid on the unit square:
-res = 500
-ticks = np.linspace(0, 1, res + 1)[:-1] + .5 / res
-# for 2D plots
-X, Y = np.meshgrid(ticks, ticks)
-grid = torch.from_numpy(np.vstack((X.ravel(), Y.ravel())).T).contiguous().type(dtype)
+
 
 
 # main class
@@ -112,15 +107,24 @@ class GaussianMixture(Module):
             heatmap /= (heatmap.mean()*spacing)
             ax.fill_between(line_cpu,heatmap,0,color='r',alpha=0.4, label="GMM Estimate")
         if self.D==2:
+            # Create a uniform grid on the unit square:
+            res = 500
+            xlow,ylow,xhi,yhi = sample[:,0].min(), sample[:,1].min(), sample[:,0].max(), sample[:,1].max()
+            xlow,ylow,xhi,yhi = xlow.cpu().numpy(),ylow.cpu().numpy(),xhi.cpu().numpy(),yhi.cpu().numpy()
+            xticks,yticks = np.linspace(xlow,xhi, res + 1)[:-1] + .5 / res,\
+                            np.linspace(ylow,yhi, res + 1)[:-1] + .5 / res
+            # for 2D plots
+            X, Y = np.meshgrid(xticks, yticks)
+            grid = torch.from_numpy(np.vstack((X.ravel(), Y.ravel())).T).contiguous().type(dtype)
             # Heatmap:
-            plt.gcf()
+            #plt.gcf()
             heatmap = self.likelihoods(grid)
             heatmap = heatmap.view(res, res).data.cpu().numpy()  # reshape as a "background" image
 
             scale = np.amax(np.abs(heatmap[:]))
             ax.imshow(-heatmap, interpolation='bilinear', origin='lower',
                        vmin=-scale, vmax=scale, cmap=cm.RdBu,
-                       extent=(0, 1, 0, 1))
+                       extent=(xlow,ylow,xhi,yhi))
 
             # Log-contours:
             log_heatmap = self.log_likelihoods(grid)
@@ -130,8 +134,9 @@ class GaussianMixture(Module):
             levels = np.linspace(-scale, scale, 41)
 
             ax.contour(log_heatmap, origin='lower', linewidths=1., colors="#C8A1A1",
-                        levels=levels, extent=(0, 1, 0, 1))
+                        levels=levels, extent=(xlow,ylow,xhi,yhi))
 
             # Scatter plot of the dataset:
             xy = sample.data.cpu().numpy()
             ax.scatter(xy[:, 0], xy[:, 1], 100 / len(xy), color='k')
+            plt.axis([xlow,xhi,ylow,yhi])

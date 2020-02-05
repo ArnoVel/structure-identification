@@ -33,11 +33,13 @@ We sample random mechanisms ![$f\sim P_F$](https://render.githubusercontent.com/
 ### Cubic Splines
 ![](./mechanism/cubic_spline.png?raw=true)
 
-### Matern 2.5 Shift/Scale/Amplitude Sums
-This name refers to a function of the form
-![f(x) =  \sum_{i}^K a_i\cdot f_i\,(\mu_i + \sigma_i\cdot x)](https://render.githubusercontent.com/render/math?math=f(x)%20%3D%20%20%5Csum_%7Bi%7D%5EK%20a_i%5Ccdot%20f_i%5C%2C(%5Cmu_i%20%2B%20%5Csigma_i%5Ccdot%20x))
-with all the parameters ![\{K\}\cup\{a_i,\mu_i,\sigma_i,\lambda_i\}_i](https://render.githubusercontent.com/render/math?math=%5C%7BK%5C%7D%5Ccup%5C%7Ba_i%2C%5Cmu_i%2C%5Csigma_i%2C%5Clambda_i%5C%7D_i) randomized (and ![\lambda_i](https://render.githubusercontent.com/render/math?math=%5Clambda_i) is the matern bandwidth)
-![](./mechanism/matern_sums.png?raw=true)
+### RBF GP Randomized Quantile sums
+This name refers to a function of the form  
+![\frac{1}{5}\sum_{i=1}^5 a_i\cdot f( \cdot ; \alpha_i)](https://render.githubusercontent.com/render/math?math=%5Cfrac%7B1%7D%7B5%7D%5Csum_%7Bi%3D1%7D%5E5%20a_i%5Ccdot%20f(%20%5Ccdot%20%3B%20%5Calpha_i))  
+
+where ![f( \cdot ; \alpha_i)](https://render.githubusercontent.com/render/math?math=f(%20%5Ccdot%20%3B%20%5Calpha_i)) is the ![\alpha_i](https://render.githubusercontent.com/render/math?math=%5Calpha_i) -th quantile of a random GP fit to a random function using k random points with all the parameters ![\{a_i,\alpha_i\}_i](https://render.githubusercontent.com/render/math?math=%5C%7Ba_i%2C%5Calpha_i%5C%7D_i) randomized. The bandwidths of the GPs are randomly set using a folded normal.
+
+![](./mechanism/rbfgp_sums.png?raw=true)
 
 ### Sigmoid AM
 Sigmoidal functions of the type ![x\mapsto \dfrac{b\cdot(x+c)}{1+\lvert b\cdot(x+c)\rvert}](https://render.githubusercontent.com/render/math?math=x%5Cmapsto%20%5Cdfrac%7Bb%5Ccdot(x%2Bc)%7D%7B1%2B%5Clvert%20b%5Ccdot(x%2Bc)%5Crvert%7D)

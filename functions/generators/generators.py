@@ -1,7 +1,8 @@
 import numpy as np
 import scipy as sp
-from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import Matern,WhiteKernel,DotProduct
+import torch
+from functions.regressors.gp.models import GaussianProcess
+from functions.regressors.gp.kernels import RBFKernel, WhiteNoiseKernel
 import scipy.interpolate as itpl
 import numpy.random as rd
 import pandas as pd
@@ -162,22 +163,43 @@ class MechanismSampler(object):
         return (lambda x:
                     b*(x+c)/(1+np.abs(b*(x+c))))
 
-    def MaternGP(self, bounds=(5,20)):
+    def RbfGP(self, bounds=(5,20)):
         ''' draws from gp priors Matern 2.5,
             length scales from [4,10] for regularity
         '''
-        nu = 2.5 ; ls = rd.uniform(*bounds,3)
-        self._ls = ls
-        gps = [GaussianProcessRegressor(alpha=1e-02,
-                            kernel=(Matern(nu=2.5, length_scale=l))
-                            ) for l in ls]
-        locs, scales = rd.normal(0,5,(len(gps),)), np.abs(rd.normal(0,5,(len(gps),)))
+        nu = 2.5 ; #ls = rd.uniform(*bounds,3)
+        #self._ls = ls
+        ker = RBFKernel()
+        gp = GaussianProcess(ker, eps=1e-02)
+        n_knots = np.random.randint(100,300)
+        x_knots = torch.linspace(np.min(self.x)-np.std(self.x),
+                        np.max(self.x)+np.std(self.x),
+                        n_knots)
+        y = torch.normal(0,0.1,x_knots.shape);
+        means, scales = torch.normal(0,5,(3,)), torch.normal(2,5,(3,)).abs()
+        y_m = (((x_knots - means[0])*scales[0]).pow(2) +
+                ((x_knots - means[1])*scales[1]).pow(3) +
+                ((x_knots - means[2])*scales[2]).pow(4)
+                ) * x_knots.sin()
+        y = y + y.sin() + y_m
+        x_knots, y = x_knots.view(-1,1), y.view(-1,1)
+        gp.set_data(x_knots,y, reg=1e-02)
+        #locs, scales = rd.normal(0,5,(len(gps),)), np.abs(rd.normal(0,5,(len(gps),)))
+
 
         def fun(X):
-            res = np.zeros(X[:,np.newaxis].shape)
-            for i,gp in enumerate(gps):
-                res += gp.sample_y(locs[i]+scales[i]*X[:,np.newaxis],1)
-            return (res / len(gps)).ravel()
+            if isinstance(X,torch.Tensor) and X.ndim <2:
+                X_ = X.view(-1,1)
+            if isinstance(X,np.ndarray):
+                X_ = torch.from_numpy(X).view(-1,1)
+                mean,var = gp(X_, return_var=True)
+                mean, var = mean.detach().cpu(), var.detach().cpu()
+                al = torch.rand(5)
+                normal = torch.distributions.normal.Normal(mean,var)
+                q = normal.icdf(al)
+                print(q.shape)
+                q = (q * torch.normal(0,1,(1,5)).expand_as(q)).mean(1)
+            return q
         return fun
 
     def tanhSum(self):

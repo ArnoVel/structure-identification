@@ -24,9 +24,9 @@ def round_(val):
 
 def viz_mechanisms(num=10):
     for _ in range(num):
-        ms = MechanismSampler(X) ; mech = ms.MaternGP(bounds=(2,10))
+        ms = MechanismSampler(X) ; mech = ms.RbfGP(bounds=(2,10))
         plt.plot(*scale_xy(X,mech))
-    plt.title('Randomized Shift/Scale/Amplitude Matern 5/2 Sum')
+    plt.title('Randomized RBF GP Quantile Sums')
     plt.legend()
     plt.show()
     plt.pause(1)
@@ -122,4 +122,5 @@ def viz_cause(num=10):
     plt.show()
 
 if __name__ == '__main__':
-    viz_cause()
+    #viz_cause()
+    viz_mechanisms()

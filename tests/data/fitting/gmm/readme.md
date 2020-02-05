@@ -4,6 +4,13 @@ Here we adapt and follow the [code from PyKeOps](https://www.kernel-operations.i
 
 ## Two dimensional case
 
+### Base example
+
 This corresponds to the initial example. We obtain the following, as expected
 
 ![](./dim-two/gmm_fit_iter499.png?raw=true)
+
+### ANM example
+
+What if we attempt to fit an ANM without a causal direction,
+only using its joint distribution?

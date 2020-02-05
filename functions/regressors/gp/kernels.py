@@ -1,6 +1,13 @@
 import torch
 
 
+def tensorize(scalar, device=None):
+    if device is not None:
+        return torch.Tensor([scalar]).to(device)
+    else:
+        return torch.Tensor([scalar])
+
+
 class Kernel(torch.nn.Module):
 
     """Base kernel."""
@@ -111,21 +118,65 @@ class RBFKernel(Kernel):
         dist = mahalanobis_squared(xi, xj, M)
         return var_s * (-0.5 * dist).exp()
 
+class MaternKernel(Kernel):
+
+    """Radial-Basis Function Kernel."""
+
+    def __init__(self, length_scale=None, sigma_s=None, eps=1e-6,
+                        device=None):
+        """Constructs an RBFKernel.
+        Args:
+            length_scale (Tensor): Length scale.
+            sigma_s (Tensor): Signal standard deviation.
+            eps (float): Minimum bound for parameters.
+        """
+        super(Kernel, self).__init__()
+        init_ls, init_sig = torch.randn(1).abs() if length_scale is None else length_scale,\
+                            torch.randn(1).abs() if sigma_s is None else sigma_s
+        self.length_scale = torch.nn.Parameter(init_ls)
+        self.sigma_s = torch.nn.Parameter(init_sig)
+        self._eps = eps
+        self._device = device
+        if self._device is not None:
+            self.cuda()
+
+    def forward(self, xi, xj, *args, **kwargs):
+        """Covariance function.
+        Args:
+            xi (Tensor): First matrix.
+            xj (Tensor): Second matrix.
+        Returns:
+            Covariance (Tensor).
+        """
+        length_scale = (self.length_scale**-2).clamp(self._eps, 1e5)
+        var_s = (self.sigma_s**2).clamp(self._eps, 1e5)
+        if self._device is not None:
+            M = torch.eye(xi.shape[1]).to(self._device) * length_scale
+        else:
+            M = torch.eye(xi.shape[1]) * length_scale
+        dist = mahalanobis_squared(xi, xj, M)
+        dist = dist.sqrt()
+        K = dist * tensorize(5.0, device=self._device).sqrt()
+        K = (tensorize(1.0, device=self._device) + K +
+             K.pow(2) / tensorize(3.0, device=self._device)) * (-K).exp()
+        return K
+
 
 class WhiteNoiseKernel(Kernel):
 
     """White noise kernel."""
 
-    def __init__(self, sigma_n=None, eps=1e-6,device=None):
+    def __init__(self, sigma_n=None, eps=1e-6, max_noise=1e5 ,device=None):
         """Constructs a WhiteNoiseKernel.
         Args:
             sigma_n (Tensor): Noise standard deviation.
             eps (float): Minimum bound for parameters.
         """
         super(Kernel, self).__init__()
-        init = torch.randn(1) if sigma_n is None else sigma_n
+        init = torch.randn(1).abs() if sigma_n is None else sigma_n
         self.sigma_n = torch.nn.Parameter(init)
         self._eps = eps
+        self._max_noise = max_noise
         self._device = device
     def forward(self, xi, xj, *args, **kwargs):
         """Covariance function.
@@ -135,7 +186,7 @@ class WhiteNoiseKernel(Kernel):
         Returns:
             Covariance (Tensor).
         """
-        var_n = (self.sigma_n**2).clamp(self._eps, 1e5)
+        var_n = (self.sigma_n**2).clamp(self._eps, self._max_noise)
         if self._device is not None:
             var_n = var_n.to(self._device)
         return var_n

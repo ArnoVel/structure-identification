@@ -1,6 +1,7 @@
 import torch
 import numpy as np
 from torch.nn.functional import softmax, log_softmax
+from functions.generators.generators import *
 
 from fitting.gmm_fit import GaussianMixture
 from fitting.data_examples import exp_gauss, unif, tri, two_dists_mixed
@@ -15,22 +16,46 @@ np.random.seed(SEED)
 # check cuda
 dtype = torch.cuda.FloatTensor if torch.cuda.is_available() else torch.FloatTensor
 # set dimension
-dim = 1
+dim = 2
 N = 10000  # Number of samples
 # data
 def data(N,dim=2):
     if dim==2:
-
         t = torch.linspace(0, 2 * np.pi, N + 1)[:-1]
         x = torch.stack((.5 + .4 * (t / 7) * t.cos(), .5 + .3 * t.sin()), 1)
         x = x + .02 * torch.randn(x.shape)
     elif dim==1:
         x = two_dists_mixed(N,sampler=tri, mus=[-0.2,0.1])
         x = torch.from_numpy(x).view(-1,1)
-
     return x
 
-data = data(N,dim=dim)
+def anm_data(N,dim=2):
+    if dim==2:
+        x = two_dists_mixed(N,sampler=exp_gauss, mus=[-2,0.5])
+        ms = MechanismSampler(x) ; mech = ms.MaternGP(bounds=(2,10))
+        y = mech(x); x = torch.from_numpy(x).view(-1,1) ;  y = torch.from_numpy(y).view(-1,1)
+        print('ok')
+        e = torch.normal(0,1,x.shape) ; y_n = y+e
+        x = (x-x.mean(0))/x.std(0); y = (y-y.mean(0))/y.std(0); y_n = (y_n-y_n.mean(0))/y_n.std(0)
+        x = torch.cat([x,y_n],1)
+
+        return (x,y)
+
+    elif dim==1:
+        x = two_dists_mixed(N,sampler=tri, mus=[-0.2,0.1])
+        x = torch.from_numpy(x).view(-1,1)
+
+        return (x, None, None)
+
+#data = data(N,dim=dim)
+data, func_vals = anm_data(N,dim=2)
+cause = data[:,0].clone()
+anm_flag = True
+
+plt.scatter(data[:,0],data[:,1], facecolor='none',edgecolor='k')
+sns.jointplot(data[:,0],data[:,1],kind="kde", space=0, color="g")
+plt.show()
+
 # useful for 1d
 low,up = data.min(), data.max()
 x = data.type(dtype)
@@ -47,8 +72,7 @@ loss = np.zeros(num_iters)
 # display utilities
 display_its = [0, 10, 50, 100, 150, 250, 350, 499]
 # default num cols is 4
-nrows = len(display_its)//3+1  if len(display_its)%3 else len(display_its)//3
-display = GridDisplay(nrows=nrows, ncols=3)
+display = GridDisplay(num_items=len(display_its), nrows=-1, ncols=3)
 
 def callback(ax, iter, dim, low, up):
     plt.pause(.05)
@@ -56,7 +80,9 @@ def callback(ax, iter, dim, low, up):
     ax.set_title('Density, iter ' + str(iter))
     #plt.axis("equal")
     if dim==2:
-        plt.axis([0,1,0,1])
+        ax.plot(cause.sort().values, func_vals[cause.sort().indices], 'k--')
+        if not anm_flag:
+            plt.axis([0,1,0,1])
     elif dim==1:
         vals = data.numpy().ravel()
         ax.hist(vals, bins=2*N//50, alpha=0.4,

@@ -9,7 +9,7 @@ from functions.miscellanea import _write_nested, _plotter, GridDisplay
 from matplotlib import pyplot as plt
 import seaborn as sns
 
-SEED = 112
+SEED = 12
 torch.manual_seed(SEED)
 np.random.seed(SEED)
 
@@ -32,16 +32,21 @@ def data(N,dim=2):
 ## ANM DATA, FOR NOW RESCALE TO (0,1) FOR DISPLAY (quite difficult to tune..)
 def anm_data(N,dim=2):
     if dim==2:
-        x = two_dists_mixed(N,sampler=tri, mus=[-0.3,0.5])
-        ms = MechanismSampler(x) ; mech = ms.CubicSpline()
-        y = mech(x); x = torch.from_numpy(x).view(-1,1) ;  y = torch.from_numpy(y).view(-1,1)
-        e = torch.normal(0,1,x.shape) ; y_n = y+e
-        x = (x-x.mean(0))/x.std(0); y = (y-y.mean(0))/y.std(0); y_n = (y_n-y_n.mean(0))/y_n.std(0)
-        x = (x - x.min()) / (x.max() - x.min()) ; y = (y - y.min()) / (y.max() - y.min())
+        s = CauseSampler(sample_size=N)
+        x = s.uniform()
+        ms = MechanismSampler(x) ; mech = ms.tanhSum()
+        x = torch.from_numpy(x).view(-1,1)
+        x = (x-x.mean(0))/x.std(0); x = (x - x.min()) / (x.max() - x.min())
+
+        y = mech(x.numpy()); y = torch.from_numpy(y).view(-1,1)
+        delta_f = (y.max() - y.min()) * 0.1
+        e = delta_f * torch.randn(x.shape) ; y_n = y+e
+
+        y_n = (y_n-y_n.mean(0))/y_n.std(0)
         y_n = (y_n - y_n.min()) / (y_n.max() - y_n.min())
         x = torch.cat([x,y_n],1)
 
-        return (x,y)
+        return (x,mech)
 
     elif dim==1:
         x = two_dists_mixed(N,sampler=tri, mus=[-0.2,0.1])
@@ -50,8 +55,7 @@ def anm_data(N,dim=2):
         return (x, None, None)
 
 #data = data(N,dim=dim)
-data, func_vals = anm_data(N,dim=2)
-cause = data[:,0].clone()
+data, mech = anm_data(N,dim=2)
 anm_flag = True
 # useful for 1d
 low,up = data.min(), data.max()
@@ -78,7 +82,11 @@ def callback(ax, iter, dim, low, up):
     #plt.axis("equal")
     if dim==2:
         if anm_flag:
-            ax.plot(cause.sort().values, func_vals[cause.sort().indices], 'k--')
+            linsp = np.linspace(0,1,1000)
+            y_linsp = mech(linsp)
+            y_linsp = (y_linsp-y_linsp.mean(0))/y_linsp.std(0)
+            y_linsp = (y_linsp - y_linsp.min()) / (y_linsp.max() - y_linsp.min())
+            ax.plot(linsp, y_linsp, 'k--')
         if not anm_flag:
             plt.axis([0,1,0,1])
     elif dim==1:
@@ -109,7 +117,7 @@ for iter in range(num_iters):
                                                     low=low,
                                                     up=up)))
 
-display.savefig(f'./tests/data/fitting/gmm_fit_iter{iter}')
+display.savefig(f'./tests/data/fitting/gmm/dim-two/anm_ex_uniform_tanhsum{iter}')
 
 qualifying_weights = (lambda t: [w for w in softmax(model.w, 0).detach().cpu().numpy() if w>t])
 ref = qualifying_weights(1e-04); avg = sum(ref)/len(ref)

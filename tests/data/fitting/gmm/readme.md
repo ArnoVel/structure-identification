@@ -16,14 +16,14 @@ This corresponds to the initial example. We obtain the following, as expected
 What if we attempt to fit an ANM without a causal direction,
 only using its joint distribution?
 
-**Mixture of 2 Uniforms as cause, spline mechanism:**  
-![](./dim-two/anm_ex_unif_spline_499its.png?raw=true)
+**Mixture of Uniforms as cause, spline mechanism:**  
+![](./dim-two/anm_ex_gmm_spline499.png?raw=true)
 
-**Mixture of 2 Triangles as cause, spline mechanism:**
+**Mixture of Gaussians as cause, spline mechanism:**
 ![](./dim-two/anm_ex_tri_spline_499its.png?raw=true)
 
-**Mixture of 2 Gaussians as cause, spline mechanism:**
-![](./dim-two/anm_ex_gauss_spline_499its.png?raw=true)
+**Uniform as cause, tanhSum mechanism:**
+![](./dim-two/anm_ex_uniform_tanhsum499.png?raw=true)
 
 
 ## One dimensional case
@@ -36,3 +36,5 @@ to the complexity of the shape of the density.
 
 
 ### Two gaussians
+
+![](./dim-one/triangles/sparsity_1/gmm_fit_iter499.png)

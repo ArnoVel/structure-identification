@@ -210,7 +210,7 @@ class MechanismSampler(object):
         def fun(X):
             d = X.reshape(-1,1) + c.reshape(1,-1)
             # once we have [N,num_tanhs] , the broadcasting will be automatic
-            return (np.tanh(b*d)*a).sum(1) + X*1e-02
+            return (np.tanh(b*d)*a).sum(1,keepdims=True) + X*1e-02
         return fun
 
 class NoiseSampler(object):

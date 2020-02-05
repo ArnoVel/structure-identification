@@ -25,4 +25,4 @@ allowing backpropagation w.r.t each inputs/parameters.
 
 ### HSIC
 
-* PyTorch [HSIC Test](structure-identification/tree/master/dependence/hsic.py) and an example of [HSIC minimization](structure-identification/tree/master/tests/data/gp/with_hsic/readme.md) for ANM-detection.
+* PyTorch [HSIC Test](dependence/hsic.py) and an example of [HSIC minimization](tests/data/gp/with_hsic/readme.md) for ANM-detection.

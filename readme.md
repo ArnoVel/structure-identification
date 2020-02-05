@@ -10,3 +10,12 @@ Good references on this topic are:
   function complexity. Various instantiations exist such as Slope-S, Slope-D, [an identifiable variant](https://eda.mmci.uni-saarland.de/pubs/2019/sloppy-marx,vreeken-wappendix.pdf), etc...
   More information can be found in [their journal paper](https://link.springer.com/article/10.1007/s10115-018-1286-7)
 * A good [review on graphical models](https://www.frontiersin.org/articles/10.3389/fgene.2019.00524/full) for a number > 2 of variables can also be helpful to understand the general POV.
+
+
+## Dependence - Independence Measures
+
+Many causal algorithms rely on independence tests and Similarity tests. Some examples are
+
+* Bivariate Methods using [Additive Noise Models](http://jmlr.org/papers/volume17/14-518/14-518.pdf) often use Mutual Information or HSIC
+* Constraint-based methods for graph data use conditional independence tests. A good statistical test is the [KCI Test](https://arxiv.org/pdf/1202.3775.pdf) and the related KPC algorithm
+* A good review on Dependence tests can be found in [this interesting thesis](https://arxiv.org/pdf/1607.03300.pdf)

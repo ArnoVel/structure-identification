@@ -35,6 +35,6 @@ This either corresponds to the number of modes of the distribution, or roughly
 to the complexity of the shape of the density.
 
 
-### Two gaussians
+### Two Triangles
 
 ![](./dim-one/triangles/sparsity_1/gmm_fit_iter499.png)

@@ -17,7 +17,7 @@ What if we attempt to fit an ANM without a causal direction,
 only using its joint distribution?
 
 **Mixture of Uniforms as cause, spline mechanism:**  
-![](./dim-two/anm_ex_gmm_spline499.png?raw=true)
+![](./dim-two/anm_ex_mixtunif_spline.png?raw=true)
 
 **Mixture of Gaussians as cause, spline mechanism:**
 ![](./dim-two/anm_ex_gmm_spline499.png?raw=true)

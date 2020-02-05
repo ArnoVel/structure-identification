@@ -1,6 +1,6 @@
 # Probing the Structure of Bivariate Distributions
 
-The goal of this repository is to compare and compile a list of different statistical methods and algorithm,
+The goal of this repository is to compare and compile a list of different statistical methods and algorithms,
 which take as inputs bivariate data (point clouds) and attempt to infer a causal direction.
 
 Good references on this topic are:

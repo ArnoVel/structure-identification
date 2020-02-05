@@ -25,4 +25,7 @@ allowing backpropagation w.r.t each inputs/parameters.
 
 ### HSIC
 
-* PyTorch [HSIC Test](dependence/hsic.py) and an example of [HSIC minimization](tests/data/gp/with_hsic/readme.md) for ANM-detection.
+* PyTorch [HSIC Test](dependence/hsic.py) and an example of [HSIC minimization](tests/data/gp/with_hsic/) for ANM-detection.
+  Although the HSIC test is differentiable wrt all inputs, our implementation doesn't yet support hyperparameter fitting.
+
+* Examples of 2D gaussian HSIC-Gamma test, and ANM-detection tests will be uploaded.

@@ -25,7 +25,7 @@ allowing backpropagation w.r.t each inputs/parameters.
 
 ### HSIC
 
-* PyTorch [HSIC Test](dependence/hsic.py) and an example of [HSIC minimization](tests/data/gp/with_hsic/) for ANM-detection.
+* PyTorch [HSIC Test](dependence/hsic.py) and an example of [HSIC minimization](tests/data/gp/with_hsic/) ( [code](tests/test_gp.py) ) for ANM-detection.
   Although the HSIC test is differentiable wrt all inputs, our implementation doesn't yet support hyperparameter fitting.
 
 * Examples of 2D gaussian HSIC-Gamma test, and ANM-detection tests will be uploaded.
@@ -39,4 +39,4 @@ allowing backpropagation w.r.t each inputs/parameters.
 ### SLOPE
 
 We are currently [re-implementing SLOPE](causal/slope) in python, allowing both Numpy & PyTorch datatypes.
-An example of the SLOPE fit for 13 basis functions can be found [in this folder](tests/data/fitting/slope)
+An example of the SLOPE fit for 13 basis functions can be found [in this folder](tests/data/fitting/slope) ( [code](tests/test_slope_fits.py) ).

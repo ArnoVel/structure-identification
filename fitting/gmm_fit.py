@@ -108,11 +108,11 @@ class GaussianMixture(Module):
             ax.fill_between(line_cpu,heatmap,0,color='r',alpha=0.4, label="GMM Estimate")
         if self.D==2:
             # Create a uniform grid on the unit square:
-            res = 500
+            res = 1000
             xlow,ylow,xhi,yhi = sample[:,0].min(), sample[:,1].min(), sample[:,0].max(), sample[:,1].max()
             xlow,ylow,xhi,yhi = xlow.cpu().numpy(),ylow.cpu().numpy(),xhi.cpu().numpy(),yhi.cpu().numpy()
-            xticks,yticks = np.linspace(xlow,xhi, res + 1)[:-1] + .5 / res,\
-                            np.linspace(ylow,yhi, res + 1)[:-1] + .5 / res
+            xticks,yticks = np.linspace(xlow,xhi, res + 1)[:-1],\
+                            np.linspace(ylow,yhi, res + 1)[:-1]
             # for 2D plots
             X, Y = np.meshgrid(xticks, yticks)
             grid = torch.from_numpy(np.vstack((X.ravel(), Y.ravel())).T).contiguous().type(dtype)
@@ -120,11 +120,12 @@ class GaussianMixture(Module):
             #plt.gcf()
             heatmap = self.likelihoods(grid)
             heatmap = heatmap.view(res, res).data.cpu().numpy()  # reshape as a "background" image
+            idx = np.argsort(heatmap.ravel())
 
             scale = np.amax(np.abs(heatmap[:]))
             ax.imshow(-heatmap, interpolation='bilinear', origin='lower',
                        vmin=-scale, vmax=scale, cmap=cm.RdBu,
-                       extent=(xlow,ylow,xhi,yhi))
+                       extent=(0,1,0,1))
 
             # Log-contours:
             log_heatmap = self.log_likelihoods(grid)
@@ -134,7 +135,7 @@ class GaussianMixture(Module):
             levels = np.linspace(-scale, scale, 41)
 
             ax.contour(log_heatmap, origin='lower', linewidths=1., colors="#C8A1A1",
-                        levels=levels, extent=(xlow,ylow,xhi,yhi))
+                        levels=levels, extent=(0,1,0,1))
 
             # Scatter plot of the dataset:
             xy = sample.data.cpu().numpy()

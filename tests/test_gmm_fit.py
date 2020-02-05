@@ -9,7 +9,7 @@ from functions.miscellanea import _write_nested, _plotter, GridDisplay
 from matplotlib import pyplot as plt
 import seaborn as sns
 
-SEED = 0
+SEED = 112
 torch.manual_seed(SEED)
 np.random.seed(SEED)
 
@@ -29,14 +29,16 @@ def data(N,dim=2):
         x = torch.from_numpy(x).view(-1,1)
     return x
 
+## ANM DATA, FOR NOW RESCALE TO (0,1) FOR DISPLAY (quite difficult to tune..)
 def anm_data(N,dim=2):
     if dim==2:
-        x = two_dists_mixed(N,sampler=exp_gauss, mus=[-2,0.5])
-        ms = MechanismSampler(x) ; mech = ms.MaternGP(bounds=(2,10))
+        x = two_dists_mixed(N,sampler=tri, mus=[-0.3,0.5])
+        ms = MechanismSampler(x) ; mech = ms.CubicSpline()
         y = mech(x); x = torch.from_numpy(x).view(-1,1) ;  y = torch.from_numpy(y).view(-1,1)
-        print('ok')
         e = torch.normal(0,1,x.shape) ; y_n = y+e
         x = (x-x.mean(0))/x.std(0); y = (y-y.mean(0))/y.std(0); y_n = (y_n-y_n.mean(0))/y_n.std(0)
+        x = (x - x.min()) / (x.max() - x.min()) ; y = (y - y.min()) / (y.max() - y.min())
+        y_n = (y_n - y_n.min()) / (y_n.max() - y_n.min())
         x = torch.cat([x,y_n],1)
 
         return (x,y)
@@ -51,11 +53,6 @@ def anm_data(N,dim=2):
 data, func_vals = anm_data(N,dim=2)
 cause = data[:,0].clone()
 anm_flag = True
-
-plt.scatter(data[:,0],data[:,1], facecolor='none',edgecolor='k')
-sns.jointplot(data[:,0],data[:,1],kind="kde", space=0, color="g")
-plt.show()
-
 # useful for 1d
 low,up = data.min(), data.max()
 x = data.type(dtype)
@@ -80,7 +77,8 @@ def callback(ax, iter, dim, low, up):
     ax.set_title('Density, iter ' + str(iter))
     #plt.axis("equal")
     if dim==2:
-        ax.plot(cause.sort().values, func_vals[cause.sort().indices], 'k--')
+        if anm_flag:
+            ax.plot(cause.sort().values, func_vals[cause.sort().indices], 'k--')
         if not anm_flag:
             plt.axis([0,1,0,1])
     elif dim==1:

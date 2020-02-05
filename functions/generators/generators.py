@@ -197,7 +197,6 @@ class MechanismSampler(object):
                 al = torch.rand(5)
                 normal = torch.distributions.normal.Normal(mean,var)
                 q = normal.icdf(al)
-                print(q.shape)
                 q = (q * torch.normal(0,1,(1,5)).expand_as(q)).mean(1)
             return q
         return fun

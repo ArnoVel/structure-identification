@@ -19,3 +19,10 @@ Many causal algorithms rely on independence tests and Similarity tests. Some exa
 * Bivariate Methods using [Additive Noise Models](http://jmlr.org/papers/volume17/14-518/14-518.pdf) often use Mutual Information or HSIC
 * Constraint-based methods for graph data use conditional independence tests. A good statistical test is the [KCI Test](https://arxiv.org/pdf/1202.3775.pdf) and the related KPC algorithm
 * A good review on Dependence tests can be found in [this interesting thesis](https://arxiv.org/pdf/1607.03300.pdf)
+
+Here we are interested in **differentiable** versions of various statistical tests. We implemented some tests using [PyTorch](https://pytorch.org/) and using smooth approximations to existing tests,
+allowing backpropagation w.r.t each inputs/parameters.
+
+### HSIC
+
+* PyTorch [HSIC Test](structure-identification/tree/master/dependence/hsic.py) and an example of [HSIC minimization](structure-identification/tree/master/tests/data/gp/with_hsic/readme.md) for ANM-detection.

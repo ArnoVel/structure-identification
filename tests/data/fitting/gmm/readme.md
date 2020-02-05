@@ -20,7 +20,7 @@ only using its joint distribution?
 ![](./dim-two/anm_ex_gmm_spline499.png?raw=true)
 
 **Mixture of Gaussians as cause, spline mechanism:**
-![](./dim-two/anm_ex_tri_spline_499its.png?raw=true)
+![](./dim-two/anm_ex_gmm_spline499.png?raw=true)
 
 **Uniform as cause, tanhSum mechanism:**
 ![](./dim-two/anm_ex_uniform_tanhsum499.png?raw=true)
@@ -36,5 +36,7 @@ to the complexity of the shape of the density.
 
 
 ### Two Triangles
-
 ![](./dim-one/triangles/sparsity_1/gmm_fit_iter499.png)
+
+### Two Uniforms
+![](./dim-one/unifs/overlapping/sparsity_1/seed_0/gmm_fit_iter499.png)

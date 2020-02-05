@@ -40,3 +40,12 @@ allowing backpropagation w.r.t each inputs/parameters.
 
 We are currently [re-implementing SLOPE](causal/slope) in python, allowing both Numpy & PyTorch datatypes.
 An example of the SLOPE fit for 13 basis functions can be found [in this folder](tests/data/fitting/slope) ( [code](tests/test_slope_fits.py) ).
+
+## Distribution fittings
+
+### Flexible Gaussian Mixtures
+
+[Fit a GMM](tests/data/fitting/gmm) ( [code](test/test_gmm_fit.py) ) with flexible number of components.
+
+* One dimensional on synthetic data (can be applied to estimate marginal complexity)
+* Two dimensional on synthetic data (as an example of causality-agnostic distribution fitting)

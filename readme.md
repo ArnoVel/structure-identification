@@ -34,9 +34,13 @@ allowing backpropagation w.r.t each inputs/parameters.
 
 * Examples of 2D gaussian HSIC-Gamma test, and ANM-detection tests will be uploaded.
 
+* Might re-implement [relative HSIC between two models](https://arxiv.org/pdf/1406.3852.pdf)
+
 ### MMD
 
 * PyTorch [MMD Test](dependence/mmd.py) with Gamma Approximation.
+
+* Might re-implement optimized MMD from [here](https://github.com/dougalsutherland/opt-mmd) or [relative MMD between two models](https://arxiv.org/pdf/1511.04581.pdf)
 
 ## Bivariate Causal Algorithms
 

@@ -3,21 +3,32 @@ import torch
 import numbers
 from cdt.data import load_dataset
 from sklearn.metrics import mean_squared_error
+import math
 # have global values
 RESOLUTION = 1e-02
 data , labels = load_dataset('tuebingen',shuffle=False)
 labels = labels.values
 complain = "Datatype not supported, try Torch.tensors or np.ndarrays"
 
-def _log(x):
+def _log(x, inplace=False):
     if isinstance(x,torch.Tensor):
-        x[x!=0]= torch.log2(x[x!=0])
+        if inplace:
+            x[x!=0] = torch.log2(x[x!=0])
+        else:
+            x_ = x.clone()
+            x_[x_!=0] = torch.log2(x_[x_!=0])
+            return x_
     elif isinstance(x,np.ndarray):
-        idx = np.where(x!=0)
-        x[idx] = np.log(x[idx])
+        if inplace:
+            idx = np.where(x!=0)
+            x[idx] = np.log2(x[idx])
+        else:
+            x_ = x.copy()
+            idx = np.where(x_!=0)
+            x_[idx] = np.log2(x_[idx])
     elif isinstance(x,numbers.Real):
         if x:
-            x = np.log(x)
+            x = np.log2(x)
         else:
             pass
     else:
@@ -80,19 +91,23 @@ def _log2_nCk(n,k, dtype='torch'):
         return _log2_factorial(n,dtype=dtype) - _log2_factorial(k,dtype=dtype) - _log2_factorial(n-k,dtype=dtype)
 
 def _log_n(z):
-    if isinstance(x,torch.Tensor):
+    if isinstance(z,torch.Tensor):
         z = torch.ceil(z)
         if z < 1:
             return z*0
         else:
             log_star = _log(z)
             summand = log_star
+            i = 0
             while log_star > 0:
-                log_star = _log(log_star)
+                log_star = _log(log_star) ; i +=1
                 summand += log_star
+                if i > 100:
+                    print(f'breaking after {i} iters, log_star={log_star}')
+                    break
         return summand + _log(torch.Tensor([2.865064]))
 
-    elif isinstance(x,np.ndarray):
+    elif isinstance(z,np.ndarray):
         z = np.ceil(z)
         if z < 1:
             return z*0
@@ -102,9 +117,10 @@ def _log_n(z):
             while log_star > 0:
                 log_star = _log(log_star)
                 summand += log_star
+
         return summand + _log(np.array([2.865064]))
 
-    elif isinstance(x,numbers.Real):
+    elif isinstance(z,numbers.Real):
         z = np.ceil(z)
         if z < 1:
             return z*0
@@ -117,7 +133,7 @@ def _log_n(z):
         return summand + _log(2.865064)
 
     else:
-        raise NotImplementedError(complain,type(x))
+        raise NotImplementedError(complain,type(z))
 
 def _get_dtype(x):
     if isinstance(x,torch.Tensor):
@@ -187,6 +203,16 @@ def _roll(x,shift):
     else:
         raise ValueError(complain, type(x))
 
+def _abs(x):
+    if isinstance(x,torch.Tensor):
+        return x.abs()
+    elif isinstance(x,np.ndarray):
+        return np.abs(x)
+    elif isinstance(x,numbers.Real):
+        return np.abs(x)
+    else:
+        raise ValueError(complain, type(x))
+
 def _min_diff(x):
     x_s = _sort(x)
     delta = 1e-02
@@ -230,3 +256,86 @@ def _set_resolution(x, resolution=RESOLUTION, method='mindiff'):
         return _min_diff(x)
     else:
         return resolution
+
+def _parameter_score(slope_model):
+    summand = 0
+    params = _nan_to_zero(slope_model._params)
+    for p in params:
+        p_abs_ = _abs(p)
+        p_temp_ = p_abs_
+        precision_ = 1.0
+        while (p_temp_ < 1000):
+            p_temp_ = p_temp_ * 10
+            precision_ = precision_ + 1
+        summand = summand + 1 + _log_n(p_temp_) + _log_n(precision_)
+    return summand
+
+def _sum_sq_err(x,y_hat):
+    assert type(x)==type(y_hat)
+    if isinstance(x,torch.Tensor):
+        return (x-y_hat).pow(2).sum()
+    elif isinstance(x,np.ndarray):
+        return ((x-y_hat)**2).sum()
+    else:
+        raise ValueError(complain, type(x))
+
+def _gaussian_score_emp(x):
+    sse_ = _sum_sq_err(x, x.mean())
+    var_ = sse / len(x)
+    if isinstance(x,torch.Tensor):
+        sigma_ = var_.sqrt()
+        return _gaussian_score(sigma_, x)
+    elif isinstance(x,np.ndarray):
+        sigma_ = np.sqrt(var_)
+        return _gaussian_score(sigma_, x)
+    else:
+        raise ValueError(complain, type(x))
+
+def _gaussian_score(sigma, x):
+    sse_ = _sum_sq_err(x, x.mean())
+    var_ = sse / len(x)
+    sigma_sq_ = sigma ** 2
+    if not sse or not sigma_sq_:
+        return 0.0
+    else:
+        resolution = _set_resolution(x)
+        err_ = (
+                    sse_ / (2 * sigma_sq_ * math.log(2)) +
+                    n/2 * _log(2* math.pi * sigma_sq_) +
+                    -n*_log(resolution)
+                )
+        return err
+
+def _gaussian_score_emp_sse(sse,n):
+    var_ = sse / n
+    if isinstance(x,torch.Tensor):
+        sigma_ = var_.sqrt()
+        return _gaussian_score_sse(sigma_, x)
+    elif isinstance(x,np.ndarray):
+        sigma_ = np.sqrt(var_)
+        return _gaussian_score_sse(sigma_, sse, n)
+    else:
+        raise ValueError(complain, type(x))
+
+def _gaussian_score_sse(sigma, sse, n):
+    sigma_sq_ = sigma ** 2
+    if not sse or not sigma_sq_:
+        return 0.0
+    else:
+        resolution = _set_resolution(x)
+        err_ = (
+                    sse_ / (2 * sigma_sq_ * math.log(2)) +
+                    n/2 * _log(2* math.pi * sigma_sq_) +
+                    -n*_log(resolution)
+                )
+        return max(err, 0)
+
+def _ref_func(x):
+    if isinstance(x,torch.Tensor):
+        pass
+    elif isinstance(x,np.ndarray):
+        pass
+    else:
+        raise ValueError(complain, type(x))
+
+    return x

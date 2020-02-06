@@ -9,6 +9,8 @@ Good references on this topic are:
 * [The SLOPE algorithm](https://arxiv.org/pdf/1709.08915.pdf) is a framework using a set of basis functions and which iteratively weight goodness of fit and
   function complexity. Various instantiations exist such as Slope-S, Slope-D, [an identifiable variant](https://eda.mmci.uni-saarland.de/pubs/2019/sloppy-marx,vreeken-wappendix.pdf), etc...
   More information can be found in [their journal paper](https://link.springer.com/article/10.1007/s10115-018-1286-7)
+* [RECI](http://proceedings.mlr.press/v84/bloebaum18a/bloebaum18a.pdf) is a statistical approach based on regression, identifiable in the low noise setting
+* [IGCI](https://staff.science.uva.nl/j.m.mooij/articles/ai2012.pdf) Justifies a statistical approach in the case the relationship is deterministic and invertible. Additional material can be found in [their subsequent paper](https://arxiv.org/pdf/1402.2499.pdf).
 * A good [review on graphical models](https://www.frontiersin.org/articles/10.3389/fgene.2019.00524/full) for a number > 2 of variables can also be helpful to understand the general POV.
 
 

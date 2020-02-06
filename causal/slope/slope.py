@@ -165,10 +165,11 @@ class SlopeFunction:
             _X_i = self._X.T[[0,i],:].T
         # works in both torch & numpy, even if slower in numpy
         return (_X_i @ _param_vec).flatten()
+
     def _fit_index(self,x,y,i):
         ''' similar to `fitI` in the original R code,
             instead of using all basis functions,
-            only uses function #i
+            only uses function #i + bias. Similar to a GLM.
         '''
         if not hasattr(self,'_X'):
             self._design_matrix(x)
@@ -205,3 +206,6 @@ class SlopeFunction:
             self._params = sol
         else:
             return ValueError(complain,type(x), type(y))
+
+    def _find_best_fit(self,x,y):
+        pass

@@ -10,6 +10,30 @@ data , labels = load_dataset('tuebingen',shuffle=False)
 labels = labels.values
 complain = "Datatype not supported, try Torch.tensors or np.ndarrays"
 
+# functions
+
+def _bin_int_as_array(int_val, num_bits, dtype=None):
+    ''' returns an int as an array of bits, using max `num_bits`.
+        ex: 4,7 --> 0010000
+            2,5 --> 01000
+            etc..
+    '''
+    if dtype is None or dtype == 'numpy':
+        bin_arr = np.zeros(num_bits)
+    elif dtype == 'torch':
+        bin_arr = torch.zeros(num_bits)
+    else:
+        ValueError(complain+"(Default value is numpy array)", dtype)
+
+    i = num_bits
+    # decreasingly 'divides' int_val by powers of 2 to find relevant bits
+    while int_val > 0:
+        r = 2 ** (i-1)
+        if (int_val >= r):
+            bin_arr[i-1] = 1.0 ; int_val -= r
+        i -= 1
+    return bin_arr
+
 def _log(x, inplace=False):
     if isinstance(x,torch.Tensor):
         if inplace:
@@ -257,9 +281,9 @@ def _set_resolution(x, resolution=RESOLUTION, method='mindiff'):
     else:
         return resolution
 
-def _parameter_score(slope_model):
+def _parameter_score(params):
     summand = 0
-    params = _nan_to_zero(slope_model._params)
+    params = _nan_to_zero(params)
     for p in params:
         p_abs_ = _abs(p)
         p_temp_ = p_abs_
@@ -270,12 +294,12 @@ def _parameter_score(slope_model):
         summand = summand + 1 + _log_n(p_temp_) + _log_n(precision_)
     return summand
 
-def _sum_sq_err(x,y_hat):
-    assert type(x)==type(y_hat)
-    if isinstance(x,torch.Tensor):
-        return (x-y_hat).pow(2).sum()
-    elif isinstance(x,np.ndarray):
-        return ((x-y_hat)**2).sum()
+def _sum_sq_err(y,y_hat):
+    assert type(y)==type(y_hat)
+    if isinstance(y,torch.Tensor):
+        return (y-y_hat).pow(2).sum()
+    elif isinstance(y,np.ndarray):
+        return ((y-y_hat)**2).sum()
     else:
         raise ValueError(complain, type(x))
 

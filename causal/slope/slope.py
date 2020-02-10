@@ -1,7 +1,7 @@
 import numpy as np
 import torch
-from .utilities import _set_resolution, _nan_to_zero
-from .utilities import *
+from .utilities import (_set_resolution, _nan_to_zero,
+                        _sum_sq_err, _parameter_score)
 
 NUM_FUNC_CLASSES = 7
 
@@ -84,6 +84,9 @@ class SlopeFunction:
             raise NotImplementedError('don\'t set params please')
 
     def _design_matrix(self,x,del_nan=True):
+        ''' warning: calling this with del_nan=True will reset
+            the _marginal_params list to 0 and change its size
+        '''
         # returns f(x) in matrix form for all x's
         # setting del_nan=True is equivalent to the `fitGeneric` method
         assert len(self._params) == self._nfuncs
@@ -105,12 +108,14 @@ class SlopeFunction:
                             ]
                             ])
             if del_nan:
+                self._isnan = torch.isnan(self._X.sum())
                 nan_rows = torch.isnan(self._X.sum(1))
                 self._nan_funcs = [i for i,b in enumerate(nan_rows) if b]
                 self._nan_funcs_str = [_index_to_function(self._nfuncs)[nf] for nf in self._nan_funcs]
                 self._X = self._X[~nan_rows]
                 self._params = [p for i,p in enumerate(self._params) if not i in self._nan_funcs]
                 self._nfuncs -= len(self._nan_funcs)
+                self._marginal_params = [[0,0] for _ in range(self._nfuncs)]
             self._X = self._X.t()
 
         elif isinstance(x,np.ndarray):
@@ -130,13 +135,18 @@ class SlopeFunction:
                             ]
                             ])
             if del_nan:
+                self._isnan = np.isnan(self._X.sum())
                 self._nan_funcs = list(np.array(np.where(np.isnan(self._X.sum(1)))).ravel())
                 self._nan_funcs_str = [_index_to_function(self._nfuncs)[nf] for nf in self._nan_funcs]
                 not_nan_rows = np.where(~np.isnan(self._X.sum(1)))
                 self._X = self._X[not_nan_rows]
                 self._params = [p for i,p in enumerate(self._params) if not i in self._nan_funcs]
                 self._nfuncs -= len(self._nan_funcs)
+            else:
+                # if dont check nan, put false
+                self._isnan = False
             self._X = self._X.T
+
 
         else:
             return ValueError(complain,type(x))
@@ -166,6 +176,28 @@ class SlopeFunction:
         # works in both torch & numpy, even if slower in numpy
         return (_X_i @ _param_vec).flatten()
 
+    def _forward_mixed(self,x, bool_idx):
+        ''' supposes a mixed fit has been done before,
+            which matches with the current `bool_idx`.
+        '''
+        if not hasattr(self, '_last_mixed_params'):
+            raise NotImplementedError("Cannot forward without fitting  mixed model first")
+
+        assert any(bool_idx == self._last_mixed_params['bool_idx'])
+
+        if not hasattr(self,'_X'):
+            self._design_matrix(x)
+
+        mask = (bool_idx == 1)
+        if isinstance(x,torch.Tensor):
+            _param_vec = torch.Tensor(self._last_mixed_params['params']).view(-1,1)
+            _X_mask = self._X.t()[mask].t()
+        elif isinstance(x,np.ndarray):
+            _param_vec = np.array(self._last_mixed_params['params']).reshape(-1,1)
+            _X_mask = self._X.T[mask].T
+        # works in both torch & numpy, even if slower in numpy
+        return (_X_mask @ _param_vec).flatten()
+
     def _fit_index(self,x,y,i):
         ''' similar to `fitI` in the original R code,
             instead of using all basis functions,
@@ -188,12 +220,64 @@ class SlopeFunction:
             sol, residuals, rank, singular_vals = np.linalg.lstsq(_X_i,y.reshape(-1,1), rcond=None)
             self._marginal_params[i] = sol
         else:
-            return ValueError(complain,type(x), type(y))
+            raise ValueError(complain,type(x), type(y))
+
+        # return a summary of the fit
+        preds = self._forward_index(x,i)
+        _sse = _sum_sq_err(y,preds)
+
+        return {   'sse': _sse,
+                    'model_score': _parameter_score(self._marginal_params[i]),
+                    'params': self._marginal_params[i]
+                }
         # in the original, 0 maps to poly0, 1 to poly1..
         # here we follow a different order which can be
         # found above in the code, or using `_index_to_function`
 
-    def _fit_lstsq(self,x,y):
+    def _fit_mixed(self,x,y,bool_idx):
+        ''' Fits a model by only using some basis functions,
+            specified by an array with O's and 1's.
+        '''
+        mask = (bool_idx == 1) ; num_funcs = int(bool_idx.sum())
+
+        if not hasattr(self,'_X'):
+            self._design_matrix(x)
+        if len(bool_idx) > self._nfuncs or len(bool_idx) < 1:
+            return None
+        assert type(x)==type(y)
+
+        if isinstance(x,torch.Tensor):
+            # by design, returns _X\y as [max(m,n),k], with _X [m,n] and y [m,k]
+            # instead of _X\y as [n,k]. when m > n, fills the m-n remaining with RSS
+            _X_mask = self._X.t()[mask].t()
+            _params = torch.lstsq(y.view(-1,1),_X_mask).solution[:num_funcs]
+        elif isinstance(x,np.ndarray):
+            _X_mask = self._X.T[mask].T
+            sol, residuals, rank, singular_vals = np.linalg.lstsq(_X_mask,y.reshape(-1,1), rcond=None)
+            _params = sol
+        else:
+            raise ValueError(complain,type(x), type(y))
+
+        str_func = _index_to_function(num_functions=self._nfuncs, del_nan=self._isnan)
+        self._last_mixed_params = {   'params': _params,
+                                      'bool_idx': bool_idx,
+                                      'str_idx': [str_func[i] for i in range(self._nfuncs) if bool_idx[i]==1],
+                                      }
+        # return a summary of the fit
+        preds = self._forward_mixed(x,bool_idx)
+        _sse = _sum_sq_err(y,preds)
+
+        return {    'sse': _sse,
+                    'model_score': _parameter_score(self._last_mixed_params['params']),
+                    'params': self._last_mixed_params['params'],
+                    'bool_idx': bool_idx,
+                    'str_idx': [str_func[i] for i in range(self._nfuncs) if bool_idx[i]==1],
+                }
+        # in the original, 0 maps to poly0, 1 to poly1..
+        # here we follow a different order which can be
+        # found above in the code, or using `_index_to_function`
+
+    def _fit_generic(self,x,y):
         assert type(x)==type(y)
         if not hasattr(self,'_X'):
             self._design_matrix(x)
@@ -207,5 +291,47 @@ class SlopeFunction:
         else:
             return ValueError(complain,type(x), type(y))
 
+        preds = self._forward(x)
+        _sse = _sum_sq_err(y,preds)
+        return  {   'sse': _sse,
+                    'model_score': _parameter_score(self._params),
+                    'params': self._params
+                }
+
     def _find_best_fit(self,x,y):
+        if not hasattr(self,'_X'):
+            self._design_matrix(x, del_nan=True)
+        if hasattr(self,'_isnan'):
+            func_index = _function_to_index(self._nfuncs, del_nan=self._isnan)
+        else:
+            func_index = _function_to_index(self._nfuncs, del_nan=False)
+        # start with linear fit
+        rr = self._fit_index(x,y, func_index['poly1'])
+        score = _gaussian_score_emp_sse(rr['sse', len(x)]) + rr['model_score']
+
+        for i in range(1,self._nfuncs):
+            # instead of leaving the nan option, just exclude the nan funcs,
+            # when computing _design_matrix() above.
+            rr_new = self._fit_index(x,y,i)
+            score_new = _gaussian_score_emp_sse(rr_new['sse', len(x)]) + rr_new['model_score']
+            if score_new < score:
+                score = score_new
+                rr = rr_new
+        return rr
+
+    def _find_best_mixed_fit(self,x,y):
+        ''' _fit_index only uses basis function #i.
+            mixed fits are a number k < _nfuncs of basis functions,
+            which yield best balance fit + complexity.
+            The default tries all 2^(k)-1 combinations of basis functions
+        '''
+        if not hasattr(self,'_X'):
+            self._design_matrix(x, del_nan=True)
+        if hasattr(self,'_isnan'):
+            func_index = _function_to_index(self._nfuncs, del_nan=self._isnan)
+        else:
+            func_index = _function_to_index(self._nfuncs, del_nan=False)
+
+        self._mixed_params = None
         pass
+        # NOT FINISHED

@@ -24,3 +24,7 @@ mixed fit. The title each time specifies which basis function was chosen. Exampl
 `poly3` means `a*x^3`, while  `poly_inv2` means `a* 1/x^2`.  
 
 ![](./slope_mixed_func_nfunc_eq_8.png?raw=true)
+
+### Example for 13 mixed fits
+
+It becomes too hard to plot, however a detailed report of the outputs of the fitting procedures on an example [can be found here](./res.out)

@@ -47,7 +47,7 @@ allowing backpropagation w.r.t each inputs/parameters.
 ### SLOPE
 
 We are currently [re-implementing SLOPE](causal/slope) in python, allowing both Numpy & PyTorch datatypes.
-An example of the SLOPE fit for 13 basis functions can be found [in this folder](tests/data/fitting/slope) ( [code](tests/test_slope_fits.py) ).
+An example of the SLOPE fit for 13 basis functions can be found [in this folder](tests/data/fitting/slope) ( [code](tests/test_slope_fits.py) ), which also contains mixed fits for 8 functions, and a little bit more.
 
 ## Distribution fittings
 

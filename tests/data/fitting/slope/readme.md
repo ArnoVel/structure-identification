@@ -47,7 +47,8 @@ As an example, using 13 functions
 The lists are much longer, but only using the top 3 and bottom 3 value, one learns that
 
 * Extreme sparsity is not preferred
-* Using an very high number of basis functions isn't preferred (the best use 7-8, much less than 13)
+* Using a very high number of basis functions isn't preferred (the best use 7-8, much less than 13)
 * polynomials and exponential components tend to give high score: good compromise complexity/goodness of fit
+* Using a small number of inverse polynomials ('complex functions') is penalized, but a small number of them is beneficial
 
-This is data-depedent, but the chosen function was a polynomial multiplied with a sigmoid and a sinusoid (relatively simple).
+This is **obviously** data-depedent, but the chosen function was a polynomial multiplied with a sigmoid and a sinusoid (relatively simple).

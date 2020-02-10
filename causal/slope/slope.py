@@ -313,7 +313,7 @@ class SlopeFunction:
             # instead of leaving the nan option, just exclude the nan funcs,
             # when computing _design_matrix() above.
             rr_new = self._fit_index(x,y,i)
-            score_new = _gaussian_score_emp_sse(rr_new['sse', len(x)]) + rr_new['model_score']
+            score_new = _gaussian_score_emp_sse(rr_new['sse'], len(x)) + rr_new['model_score']
             if score_new < score:
                 score = score_new
                 rr = rr_new

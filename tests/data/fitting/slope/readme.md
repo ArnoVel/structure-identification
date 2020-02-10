@@ -27,4 +27,27 @@ mixed fit. The title each time specifies which basis function was chosen. Exampl
 
 ### Example for 13 mixed fits
 
-It becomes too hard to plot, however a detailed report of the outputs of the fitting procedures on an example [can be found here](./res.out)
+It becomes too hard to plot, however a detailed report of the outputs of the fitting procedures on an example [can be found here](./res.out).
+Using the data from each mixed fit, one can rank the models using the SLOPE scoring method.  
+
+As an example, using 13 functions
+
+* The scores in increasing order are `6820.789  6843.336  6844.5376 ... 8631.703  8632.497  8642.965`
+* corresponding to basis functions
+  ```
+  'poly0+exp+poly1+poly2+poly3+poly4+poly5',
+  'poly0+exp+poly1+poly2+poly3+poly4+poly5+poly_inv5',
+  'poly0+exp+poly1+poly2+poly3+poly4+poly5+poly_inv1',
+  ...
+  'poly4+poly_inv1+poly_inv2+poly_inv3+poly_inv4+poly_inv5',
+  'poly0+exp+poly2+poly_inv1+poly_inv2+poly_inv3+poly_inv4+poly_inv5',
+  'poly0+exp+poly3+poly_inv1+poly_inv2+poly_inv3+poly_inv4+poly_inv5'
+
+  ```
+The lists are much longer, but only using the top 3 and bottom 3 value, one learns that
+
+* Extreme sparsity is not preferred
+* Using an very high number of basis functions isn't preferred (the best use 7-8, much less than 13)
+* polynomials and exponential components tend to give high score: good compromise complexity/goodness of fit
+
+This is data-depedent, but the chosen function was a polynomial multiplied with a sigmoid and a sinusoid (relatively simple).

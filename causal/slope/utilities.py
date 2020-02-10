@@ -330,29 +330,28 @@ def _gaussian_score(sigma, x):
                 )
         return err
 
-def _gaussian_score_emp_sse(sse,n):
+def _gaussian_score_emp_sse(sse,n, resolution):
     var_ = sse / n
-    if isinstance(x,torch.Tensor):
+    if isinstance(sse,torch.Tensor):
         sigma_ = var_.sqrt()
-        return _gaussian_score_sse(sigma_, x)
-    elif isinstance(x,np.ndarray):
+        return _gaussian_score_sse(sigma_, sse, n, resolution)
+    elif isinstance(sse,np.ndarray):
         sigma_ = np.sqrt(var_)
-        return _gaussian_score_sse(sigma_, sse, n)
+        return _gaussian_score_sse(sigma_, sse, n, resolution)
     else:
         raise ValueError(complain, type(x))
 
-def _gaussian_score_sse(sigma, sse, n):
+def _gaussian_score_sse(sigma, sse, n, resolution):
     sigma_sq_ = sigma ** 2
     if not sse or not sigma_sq_:
         return 0.0
     else:
-        resolution = _set_resolution(x)
         err_ = (
-                    sse_ / (2 * sigma_sq_ * math.log(2)) +
+                    sse / (2 * sigma_sq_ * math.log(2)) +
                     n/2 * _log(2* math.pi * sigma_sq_) +
                     -n*_log(resolution)
                 )
-        return max(err, 0)
+        return max(err_, 0)
 
 def _ref_func(x):
     if isinstance(x,torch.Tensor):

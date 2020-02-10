@@ -2,7 +2,7 @@
 
 The slope algorithm carefully tests several basis functions one by one,
 and then all together, finding the best compromise between goodness of fit and
-function complexity as definded in [their paper](https://arxiv.org/pdf/1709.08915.pdf).
+function complexity as defined in [their paper](https://arxiv.org/pdf/1709.08915.pdf).
 
 The original code is in R, we attempt to translate it into a pytorch/numpy compatible format.
 
@@ -42,7 +42,6 @@ As an example, using 13 functions
   'poly4+poly_inv1+poly_inv2+poly_inv3+poly_inv4+poly_inv5',
   'poly0+exp+poly2+poly_inv1+poly_inv2+poly_inv3+poly_inv4+poly_inv5',
   'poly0+exp+poly3+poly_inv1+poly_inv2+poly_inv3+poly_inv4+poly_inv5'
-
   ```
 The lists are much longer, but only using the top 3 and bottom 3 value, one learns that
 

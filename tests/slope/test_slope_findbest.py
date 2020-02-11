@@ -11,8 +11,8 @@ from functions.miscellanea import _write_nested, _plotter, GridDisplay
 
 
 def _torch_data(n=700, pows=[2,3]):
-    x,e = torch.normal(0,1,(500,)),\
-            torch.normal(0,1,(500,))
+    x,e = torch.normal(0,1,(n,)),\
+            torch.normal(0,1,(n,))
     y = torch.sin(x)*torch.sigmoid(x)*((x-1).pow(pows[0])/5 - (x+1).pow(pows[1])/5)
 
     return x,y,e
@@ -26,7 +26,7 @@ def _np_data(n=700,pows=[2,3]):
 
 pp = ppr.PrettyPrinter(indent=4)
 #x,y,e = _torch_data(pows=[1,2])
-x,y,e = _torch_data(pows=[2,5])
+x,y,e = _torch_data(pows=[2,3])
 e = 1.5*e # try to have higher noise levels
 y_n = y+e ; y_n = (y_n - y_n.mean(0)) / y_n.std(0)
 
@@ -62,7 +62,7 @@ y_best_mixed = slope_f._forward_mixed(x,_res_best_mixed['bool_idx'])
 plt.plot(x.sort().values,y_best_mixed[x.sort().indices], color='coral', label=f'Best Mixed Fit ({_res_best_mixed["str_idx"]})')
 
 plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), fancybox=True)
-plt.savefig('best_fits.png', dpi=200, bbox_inches="tight")
+plt.savefig('best_fits.png', dpi=120, bbox_inches="tight")
 plt.show()
 
 pp.pprint(check) ; pp.pprint(_res_best_mixed)

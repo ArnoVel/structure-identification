@@ -1,7 +1,8 @@
 import numpy as np
 import torch
 from .utilities import (_set_resolution, _nan_to_zero,
-                        _sum_sq_err, _parameter_score)
+                        _sum_sq_err, _parameter_score,
+                        _bin_int_as_array)
 
 NUM_FUNC_CLASSES = 7
 
@@ -298,7 +299,7 @@ class SlopeFunction:
                     'params': self._params
                 }
 
-    def _find_best_fit(self,x,y):
+    def _find_best_fit_index(self,x,y):
         if not hasattr(self,'_X'):
             self._design_matrix(x, del_nan=True)
         if hasattr(self,'_isnan'):
@@ -307,13 +308,15 @@ class SlopeFunction:
             func_index = _function_to_index(self._nfuncs, del_nan=False)
         # start with linear fit
         rr = self._fit_index(x,y, func_index['poly1'])
-        score = _gaussian_score_emp_sse(rr['sse', len(x)]) + rr['model_score']
+        resolution = _set_resolution(x)
+        score = _gaussian_score_emp_sse(rr['sse'], len(x), resolution=resolution) + rr['model_score']
+
 
         for i in range(1,self._nfuncs):
             # instead of leaving the nan option, just exclude the nan funcs,
             # when computing _design_matrix() above.
             rr_new = self._fit_index(x,y,i)
-            score_new = _gaussian_score_emp_sse(rr_new['sse'], len(x)) + rr_new['model_score']
+            score_new = _gaussian_score_emp_sse(rr_new['sse'], len(x), resolution=resolution) + rr_new['model_score']
             if score_new < score:
                 score = score_new
                 rr = rr_new
@@ -332,6 +335,16 @@ class SlopeFunction:
         else:
             func_index = _function_to_index(self._nfuncs, del_nan=False)
 
-        self._mixed_params = None
-        pass
-        # NOT FINISHED
+        # start with linear fit
+        resolution = _set_resolution(x)
+        rr = self._fit_index(x,y, func_index['poly1'])
+        score = _gaussian_score_emp_sse(rr['sse'], len(x), resolution=resolution) + rr['model_score']
+
+        for i in range(1,2**(slope_f._nfuncs)):
+            bool_idx = _bin_int_as_array(i,self._nfuncs)
+            rr_new = self._fit_mixed(x,y,bool_idx)
+            score_new =  _gaussian_score_emp_sse(rr_new['sse'], len(x), resolution=resolution) + rr_new['model_score']
+            if score_new < score:
+                score = score_new
+                rr = rr_new
+        return rr

@@ -52,13 +52,13 @@ def _log(x, inplace=False):
             x_[idx] = np.log2(x_[idx])
     elif isinstance(x,numbers.Real):
         if x:
-            x = np.log2(x)
+            x_ = np.log2(x)
         else:
             pass
     else:
         raise NotImplementedError(complain,type(x))
 
-    return x
+    return x_
 
 def _read_index_tcep(i):
     return data.iloc[i].values
@@ -122,13 +122,9 @@ def _log_n(z):
         else:
             log_star = _log(z)
             summand = log_star
-            i = 0
             while log_star > 0:
-                log_star = _log(log_star) ; i +=1
+                log_star = _log(log_star)
                 summand += log_star
-                if i > 100:
-                    print(f'breaking after {i} iters, log_star={log_star}')
-                    break
         return summand + _log(torch.Tensor([2.865064]))
 
     elif isinstance(z,np.ndarray):
@@ -335,11 +331,11 @@ def _gaussian_score_emp_sse(sse,n, resolution):
     if isinstance(sse,torch.Tensor):
         sigma_ = var_.sqrt()
         return _gaussian_score_sse(sigma_, sse, n, resolution)
-    elif isinstance(sse,np.ndarray):
+    elif isinstance(sse, np.ndarray) or isinstance(sse, np.floating):
         sigma_ = np.sqrt(var_)
         return _gaussian_score_sse(sigma_, sse, n, resolution)
     else:
-        raise ValueError(complain, type(x))
+        raise ValueError(complain, type(sse))
 
 def _gaussian_score_sse(sigma, sse, n, resolution):
     sigma_sq_ = sigma ** 2
@@ -362,3 +358,6 @@ def _ref_func(x):
         raise ValueError(complain, type(x))
 
     return x
+
+def _fit_comparison(model_):
+    pass

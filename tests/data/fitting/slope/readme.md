@@ -30,24 +30,42 @@ mixed fit. The title each time specifies which basis function was chosen. Exampl
 It becomes too hard to plot, however a detailed report of the outputs of the fitting procedures on an example [can be found here](./res.out).
 Using the data from each mixed fit, one can rank the models using the SLOPE scoring method.  
 
-As an example, using 13 functions
+As an example, using 13 functions (setting both torch & numpy seeds as 1020), on the following data
 
-* The scores in increasing order are `6820.789  6843.336  6844.5376 ... 8631.703  8632.497  8642.965`
+![](./slope_generic.png?raw=true)
+
+* The scores in increasing order are
+  ```
+  6184.2236 6201.253 6201.4907 6203.2 6207.377 6208.0234
+  ...
+  6443.616 6443.7754 6444.083 6444.7114 6445.641 6466.3438`
+  ```
 * corresponding to basis functions
   ```
-  'poly0+exp+poly1+poly2+poly3+poly4+poly5',
-  'poly0+exp+poly1+poly2+poly3+poly4+poly5+poly_inv5',
-  'poly0+exp+poly1+poly2+poly3+poly4+poly5+poly_inv1',
+  'exp',
+  'poly2',
+  'poly1',
+  'poly1+poly2',
+  'exp+poly2',
+  'poly4',
   ...
-  'poly4+poly_inv1+poly_inv2+poly_inv3+poly_inv4+poly_inv5',
-  'poly0+exp+poly2+poly_inv1+poly_inv2+poly_inv3+poly_inv4+poly_inv5',
-  'poly0+exp+poly3+poly_inv1+poly_inv2+poly_inv3+poly_inv4+poly_inv5'
+  'poly0+exp+poly1+poly2+poly3+poly5+poly_inv1+poly_inv2+poly_inv3+poly_inv4+poly_inv5',
+  'exp+poly1+poly2+poly3+poly4+poly5+poly_inv1+poly_inv2+poly_inv3+poly_inv4+poly_inv5',
+  'poly0+exp+poly2+poly3+poly4+poly5+poly_inv1+poly_inv2+poly_inv3+poly_inv4+poly_inv5',
+  'poly0+exp+poly1+poly2+poly4+poly5+poly_inv1+poly_inv2+poly_inv3+poly_inv4+poly_inv5',
+  'poly0+poly1+poly2+poly3+poly4+poly5+poly_inv1+poly_inv2+poly_inv3+poly_inv4+poly_inv5',
+  'poly0+exp+poly1+poly2+poly3+poly4+poly5+poly_inv1+poly_inv2+poly_inv3+poly_inv4+poly_inv5'
   ```
-The lists are much longer, but only using the top 3 and bottom 3 value, one learns that
+The lists are much longer, but only using the top 6 and bottom 6 value, one learns that
 
-* Extreme sparsity is not preferred
-* Using a very high number of basis functions isn't preferred (the best use 7-8, much less than 13)
+* sparsity is preferred, but using more than 1 basis functions can yield similar/better scores when needed
+* Using a very high number of basis functions isn't preferred (the best use 1-2, which is << 13)
 * polynomials and exponential components tend to give high score: good compromise complexity/goodness of fit
-* Using a small number of inverse polynomials ('complex functions') is penalized, but a small number of them is beneficial
+* Using a high number of inverse polynomials ('complex functions') is penalized, but a small number of them is beneficial.
+  **for example:** at the ranks 9-17, one finds 9 inverse polynomials, either alone or with exponential component,
+  * the scores range from 6209.575 to 6211.8154,
+  * comparable to linear fits in score,
+  * very close to best ranks, and far away from average (~ 6280)
+  * the first rank at more than 2 inverse polynomials is 367 with score 6259.1533, much closer to average
 
 This is **obviously** data-depedent, but the chosen function was a polynomial multiplied with a sigmoid and a sinusoid (relatively simple).

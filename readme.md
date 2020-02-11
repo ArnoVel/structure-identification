@@ -13,7 +13,7 @@ Good references on this topic are:
 * [RECI](http://proceedings.mlr.press/v84/bloebaum18a/bloebaum18a.pdf) is a statistical approach based on regression, identifiable in the low noise setting
 * [IGCI](https://staff.science.uva.nl/j.m.mooij/articles/ai2012.pdf) Justifies a statistical approach in the case the relationship is deterministic and invertible. Additional material can be found in [their subsequent paper](https://arxiv.org/pdf/1402.2499.pdf).
 * A good [review on graphical models](https://www.frontiersin.org/articles/10.3389/fgene.2019.00524/full) for a number > 2 of variables can also be helpful to understand the general POV.
-* [CGNN](https://arxiv.org/pdf/1709.05321.pdf) Connects graphical models, generative models, and bivariate methods in an interpretable fashion (using neural networks). It is a good bridge between bivariate and graph methods.
+* [CGNN](https://arxiv.org/pdf/1709.05321.pdf) Connects graphical models, generative models, and bivariate methods in an interpretable fashion (using neural networks). It is a good bridge between bivariate and graph methods. The authors are currently building [a very helpful python causal discovery library](https://github.com/FenTechSolutions/CausalDiscoveryToolbox)
 
 
 ## Dependence - Independence Measures

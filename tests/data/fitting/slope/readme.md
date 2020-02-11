@@ -23,10 +23,18 @@ Below we give two examples of the best-fit search, and then more examples giving
 The functions used in the example are of the type `y = sin(x)*sigmoid(x)*((x-1)^pow1)/5 - (x+1)^pow2)/5)`, where `pow1,pow2` are integer powers.
 
 ### Example in the low-noise setting
+In the low noise setting, generic fitting and lowest complexity scoring achieve very similar fits.
+However, as one can guess, generic fitting is much more complex in terms of SLOPE score, as it uses high
+precision to store all 13 parameters. Comparatively, the low complexity solution achieves almost the same fit with only 7 functions.  
+The best index fit is 1, which is a downward exponential trend.  
 
 ![](./best_fits_low_n.png?raw=true)
 
 ### Example in the high-noise setting
+In the high noise setting, the generic and low complexity fits are again similar.
+The fact one uses 5 inverse polynomials results in a large spike around 0.  
+Again, we achieve less (5 << 13) basis functions using score comparisons.
+The best index fit is 1, which is a downward exponential trend.  
 
 ![](./best_fits_high_n.png?raw=true)
 

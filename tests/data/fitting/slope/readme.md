@@ -24,7 +24,7 @@ The functions used in the example are of the type `y = sin(x)*sigmoid(x)*((x-1)^
 
 ### Example in the low-noise setting
 
-![](./best_fits_lown_n.png?raw=true)
+![](./best_fits_low_n.png?raw=true)
 
 ### Example in the high-noise setting
 

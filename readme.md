@@ -21,7 +21,8 @@ Good references on this topic are:
 Many causal algorithms rely on independence tests and Similarity tests. Some examples are
 
 * Bivariate Methods using [Additive Noise Models](http://jmlr.org/papers/volume17/14-518/14-518.pdf) often use Mutual Information or HSIC
-* Constraint-based methods for graph data use conditional independence tests. A good statistical test is the [KCI Test](https://arxiv.org/pdf/1202.3775.pdf) and the related KPC algorithm
+* Constraint-based methods for graph data use conditional independence tests. A good statistical test is the [KCI Test](https://arxiv.org/pdf/1202.3775.pdf) and the related KPC algorithm.
+  In case one needs a faster, approximate method, the authors (and others) have recently [designed approximations](https://arxiv.org/pdf/1702.03877.pdf).
 * A good review on Dependence tests can be found in [this interesting thesis](https://arxiv.org/pdf/1607.03300.pdf)
 
 Here we are interested in **differentiable** versions of various statistical tests. We implemented some tests using [PyTorch](https://pytorch.org/) and using smooth approximations to existing tests,

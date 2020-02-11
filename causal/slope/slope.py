@@ -2,7 +2,7 @@ import numpy as np
 import torch
 from .utilities import (_set_resolution, _nan_to_zero,
                         _sum_sq_err, _parameter_score,
-                        _bin_int_as_array)
+                        _bin_int_as_array, _gaussian_score_emp_sse)
 
 NUM_FUNC_CLASSES = 7
 
@@ -229,7 +229,8 @@ class SlopeFunction:
 
         return {   'sse': _sse,
                     'model_score': _parameter_score(self._marginal_params[i]),
-                    'params': self._marginal_params[i]
+                    'params': self._marginal_params[i],
+                    'index':i
                 }
         # in the original, 0 maps to poly0, 1 to poly1..
         # here we follow a different order which can be
@@ -340,7 +341,7 @@ class SlopeFunction:
         rr = self._fit_index(x,y, func_index['poly1'])
         score = _gaussian_score_emp_sse(rr['sse'], len(x), resolution=resolution) + rr['model_score']
 
-        for i in range(1,2**(slope_f._nfuncs)):
+        for i in range(1,2**(self._nfuncs)):
             bool_idx = _bin_int_as_array(i,self._nfuncs)
             rr_new = self._fit_mixed(x,y,bool_idx)
             score_new =  _gaussian_score_emp_sse(rr_new['sse'], len(x), resolution=resolution) + rr_new['model_score']

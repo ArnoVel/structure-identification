@@ -49,11 +49,11 @@ print(f'parameter complexity scoring of generic fit {_parameter_score(slope_f._p
 
 func_name = _index_to_function(slope_f._nfuncs, del_nan=slope_f._isnan)
 
-plt.plot(x.sort().values,y[x.sort().indices], 'k--')
-plt.scatter(x,y+e,facecolor='none', edgecolor='r', alpha=0.5)
-y_slope = slope_f._forward(x)
-plt.plot(x.sort().values,y_slope[x.sort().indices], 'b-.')
-plt.show()
+# plt.plot(x.sort().values,y[x.sort().indices], 'k--')
+# plt.scatter(x,y+e,facecolor='none', edgecolor='r', alpha=0.5)
+# y_slope = slope_f._forward(x)
+# plt.plot(x.sort().values,y_slope[x.sort().indices], 'b-.')
+# plt.show()
 
 
 for i in range(1,slope_f._nfuncs):

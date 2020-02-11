@@ -6,6 +6,26 @@ function complexity as defined in [their paper](https://arxiv.org/pdf/1709.08915
 
 The original code is in R, we attempt to translate it into a pytorch/numpy compatible format.
 
+## Finding the best set of basis functions
+The two main **global** (a unique function f_g for the whole domain) approaches given a set of basis functions are:
+
+* Either find the 'best' (in terms of score) individual function so that `y_i = a*f(x_i) + b` (GLM for `f`).
+  This method is called `fitI` or in our implementation `_fit_index`
+
+* Either find the 'best' subset by enumerating all possibilities. A set of more than 13 functions is not recommended,
+  as 13 functions already means fitting 8191 models using least squares on the samples.
+
+* Or least squares using the full set of basis functions, obtain best fit regardless of complexity score.
+  One could compare sparsity induced by a classic Lasso regression tactic versus sparsity obtained through SLOPE scoring,
+  but we haven't implemented this yet.
+
+Below we give two examples of the best-fit search, and then more examples giving detail of each fits.
+The functions used in the example are of the type `y = sin(x)*sigmoid(x)*((x-1)^pow1)/5 - (x+1)^pow2)/5)`, where `pow1,pow2` are integer powers.
+
+### Example in the low-noise setting
+
+
+
 ## Examples of fitting procedure
 The black is the true function, the blue is the generic fit (all basis functions together),
 and the green each time is each basis function alone

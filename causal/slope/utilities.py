@@ -277,14 +277,14 @@ def _set_resolution(x, resolution=RESOLUTION, method='mindiff'):
     else:
         return resolution
 
-def _parameter_score(params):
+def _parameter_score(params, thresh=1000):
     summand = 0
     params = _nan_to_zero(params)
     for p in params:
         p_abs_ = _abs(p)
         p_temp_ = p_abs_
         precision_ = 1.0
-        while (p_temp_ < 1000):
+        while (p_temp_ < thresh):
             p_temp_ = p_temp_ * 10
             precision_ = precision_ + 1
         summand = summand + 1 + _log_n(p_temp_) + _log_n(precision_)

@@ -58,7 +58,7 @@ To be added, we count any symmetric distribution for which mean = mode = 0 as a 
 
 ## Resulting point clouds
 To list every combination, we would need 288 different types of causal distributions.
-One can find a find examples [in this folder](./pairs)  
+One can find a find examples [in this folder](./pairs). The full gallery can be found [in my pictures-only repository](https://github.com/ArnoVel/causal-pictures).
 For example,
 ### ANM case
 ![](./pairs/anm_True_c_subgmm_bn_student_m_sigmoidam.png?raw=true)

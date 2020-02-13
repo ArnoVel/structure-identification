@@ -252,7 +252,7 @@ class NoiseSampler(object):
             base_noise_sample = rd.beta(al,al, size=self.n)*2 - 0.5
         elif self.base_noise == 'semicircular':
             # same as beta with 3/2 al, and centered at 0
-            base_noise_sample = semicircular.rvs(size=self.n)
+            base_noise_sample = semicircular.rvs(size=self.n) * 0.8 # too big var apparently..
 
         if self.anm:
             effect = self.effect_sample ; effect = (effect - effect.mean()) / effect.std()

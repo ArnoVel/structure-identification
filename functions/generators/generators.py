@@ -1,6 +1,7 @@
 import numpy as np
 import scipy as sp
 import torch
+from scipy.stats import semicircular
 from functions.regressors.gp.models import GaussianProcess
 from functions.regressors.gp.kernels import RBFKernel, WhiteNoiseKernel
 import scipy.interpolate as itpl
@@ -198,7 +199,7 @@ class MechanismSampler(object):
                 normal = torch.distributions.normal.Normal(mean,var)
                 q = normal.icdf(al)
                 q = (q * torch.normal(0,1,(1,5)).expand_as(q)).mean(1)
-            return q
+            return q.numpy()
         return fun
 
     def tanhSum(self):
@@ -216,24 +217,58 @@ class MechanismSampler(object):
 class NoiseSampler(object):
     """ Given X and Y, generates noise N,
         assumes X,Y both scaled to unit variance, zero mean"""
-    def __init__(self, cause_sample, effect_sample, noise_type='anm'):
+    def __init__(self, cause_sample, effect_sample, anm=True, base_noise='normal'):
         self.cause_sample = cause_sample
         self.effect_sample = effect_sample
-        self.noise_type = noise_type
+        self.anm = anm # if false heteroskedastic
         self.n = len(cause_sample)
+        self.base_noise = base_noise
+
+        noise_list = ['normal', 'student', 'triangular', 'uniform',
+                       'beta', 'semicircular']
+        if base_noise not in noise_list:
+            raise NotImplementedError(f"base noise requested ({base_noise}) not in list: {noise_list}")
+
+        if not anm:
+            mech_sampler = MechanismSampler(self.cause_sample)
+            self.noise_f = mech_sampler.CubicSpline()
         assert self.n == len(effect_sample)
 
-    def add_noise(self,sigma=1.0):
-        base_noise = rd.normal(0,sigma, size=self.n)
-        if self.noise_type=='anm':
-            y = self.effect_sample + base_noise
-        elif self.noise_type=='heteroskedastic':
-            mech_sampler = MechanismSampler(self.cause_sample)
-            f = mech_sampler.CubicSpline()
-            # each noise sample is a normal RV * f(cause)
-            y = self.effect_sample + base_noise * f(self.cause_sample)
+    def add_noise(self):
+        gamma = rd.uniform(0.3,0.7,1) # controls noise to effect ratio
+
+        if self.base_noise == 'normal':
+            base_noise_sample = rd.normal(0,1, size=self.n)
+        elif self.base_noise == 'uniform':
+            base_noise_sample = rd.uniform(-1,1, size=self.n)
+        elif self.base_noise == 'triangular':
+            base_noise_sample = rd.triangular(-1,0,1, size=self.n)
+        elif self.base_noise == 'student':
+            nu = rd.randint(4,8,1)
+            base_noise_sample = rd.standard_t(nu, size=self.n)
+        elif self.base_noise == 'beta':
+            al = rd.randint(2,6,1)
+            # similar to pert distribution
+            base_noise_sample = rd.beta(al,al, size=self.n)*2 - 0.5
+        elif self.base_noise == 'semicircular':
+            # same as beta with 3/2 al, and centered at 0
+            base_noise_sample = semicircular.rvs(size=self.n)
+
+        if self.anm:
+            effect = self.effect_sample ; effect = (effect - effect.mean()) / effect.std()
+            # normalize to account for small sample deviations
+            base_noise_sample = (base_noise_sample - base_noise_sample.mean()) / base_noise_sample.std()
+
+            y = gamma * effect + (1-gamma)*base_noise_sample
+
         else:
-            raise NotImplementedError('this noise type was not expected',self.noise_type)
+            effect = self.effect_sample ; effect = (effect - effect.mean()) / effect.std()
+            # normalize to account for small sample deviations, but after mapping X
+            het_noise = base_noise_sample * self.noise_f(self.cause_sample)
+            het_noise = (het_noise - het_noise.mean()) / het_noise.std()
+
+            y = gamma * effect + (1-gamma) * het_noise
+
         y = (y - y.mean()) / y.std()
         return y
 
@@ -249,12 +284,12 @@ class PairSampler(object):
         will lead to nonsensical samples
     """
 
-    def __init__(self, n, noise_type='anm', cause_type='gmm', mechanism_type='spline'):
+    def __init__(self, n, anm=True, base_noise='normal', cause_type='gmm', mechanism_type='spline'):
         super(PairSampler, self).__init__()
         self.n = n
-        self.noise_type = noise_type
         self.mechanism_type = mechanism_type
-        self.noise_type = noise_type
+        self.base_noise = base_noise
+        self.anm = anm
 
         cause_sampler = CauseSampler(sample_size=n)
         cause_choice = {
@@ -280,6 +315,10 @@ class PairSampler(object):
             self.mechanism = mech_sampler.CubicSpline()
         elif self.mechanism_type == 'sigmoidam':
             self.mechanism = mech_sampler.SigmoidAM()
+        elif self.mechanism_type == 'tanhsum':
+            self.mechanism = mech_sampler.tanhSum()
+        elif self.mechanism_type == 'rbfgp':
+            self.mechanism = mech_sampler.RbfGP()
         else:
             raise NotImplementedError("This mechanism type was not expected",self.mechanism_type)
 
@@ -290,9 +329,10 @@ class PairSampler(object):
         self.effect_sample = self.mechanism(self.cause_sample)
 
     def generate_pair(self):
-        noise_sampler = NoiseSampler(self.cause_sample,
-                                    self.effect_sample,
-                                    self.noise_type)
+        noise_sampler = NoiseSampler(cause_sample= self.cause_sample,
+                                     effect_sample= self.effect_sample,
+                                     anm= self.anm,
+                                     base_noise=self.base_noise)
         noisy_effect = noise_sampler.add_noise()
 
         return np.vstack((self.cause_sample, noisy_effect))
@@ -308,20 +348,23 @@ class PairSampler(object):
 
 class DatasetSampler(object):
     def __init__(self, N, n=1000,
-                noise_type='anm',
+                anm = True,
+                base_noise='normal',
                 cause_type='gmm',
                 mechanism_type='spline',
                 with_labels=False):
         super(DatasetSampler, self).__init__()
         self.N = N
         self.n = n
+        self.anm = anm
         self.pSampler = PairSampler(n,
-                                noise_type=noise_type,
+                                anm=self.anm,
+                                base_noise=base_noise,
                                 cause_type=cause_type,
                                 mechanism_type=mechanism_type)
-        self.noise_type = noise_type
+        self.anm = anm
         self.mechanism_type = mechanism_type
-        self.noise_type = noise_type
+        self.base_noise = base_noise
         self.with_labels = with_labels
 
     def __iter__(self):

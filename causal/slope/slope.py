@@ -2,7 +2,8 @@ import numpy as np
 import torch
 from .utilities import (_set_resolution, _nan_to_zero,
                         _sum_sq_err, _parameter_score,
-                        _bin_int_as_array, _gaussian_score_emp_sse)
+                        _bin_int_as_array, _gaussian_score_emp_sse,
+                        _unique)
 
 NUM_FUNC_CLASSES = 7
 
@@ -349,3 +350,12 @@ class SlopeFunction:
                 score = score_new
                 rr = rr_new
         return rr
+
+    def _fit_wrapper(x,y, mixed=False):
+        # rounding is same in np & torch
+        min_num = 5e04 ; max_x = x.max() ; prec = 1e05
+        x_f = (x*prec).round()
+        unique, counts = _unique(x)
+        mean_c, sd_c, len_x = counts.mean(), counts.std(), len(x)
+
+        _r_bestfit = self._find_best_mixed_fit(x,y) if mixed else self._find_best_fit_index(x,y)

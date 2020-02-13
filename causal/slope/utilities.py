@@ -60,6 +60,16 @@ def _log(x, inplace=False):
 
     return x_
 
+def _unique(x, return_counts=True):
+    if isinstance(x,torch.Tensor):
+        unique, counts = torch.unique(x, return_counts=return_counts)
+    elif isinstance(x,np.ndarray):
+        unique, counts = np.unique(a, return_counts=return_counts)
+    else:
+        raise ValueError(complain, type(x))
+    return unique, counts
+
+
 def _read_index_tcep(i):
     return data.iloc[i].values
 

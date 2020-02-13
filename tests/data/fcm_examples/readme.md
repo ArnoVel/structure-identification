@@ -52,5 +52,18 @@ with all the parameters ![\{K\}\cup\{a_i,\b_i,\c_i\}_i](https://render.githubuse
 
 ![](./mechanism/tanh_sum.png?raw=true)
 
+
+## Noise Distributions
+To be added, we count any symmetric distribution for which mean = mode = 0 as a potential noise source for a model `Y = f(X) + N` if anm, or `Y = f(X)+ N*g(X)` if heteroskedastic.
+
+## Resulting point clouds
+To list every combination, we would need 288 different types of causal distributions.
+One can find a find examples [in this folder](./pairs)  
+For example,
+### ANM case
+![](./pairs/anm_True_c_subgmm_bn_student_m_sigmoidam.png?raw=true)
+### HTR case
+![](./pairs/anm_False_c_gmm_bn_beta_m_sigmoidam.png?raw=true)
+
 # Acknowledgments
 [This clever hack](https://alexanderrodin.com/github-latex-markdown/?math=(X%2CY)%20%5Csim%20P_%7BX%2CY%7D) allows one to change latex code to markdown-rendered images

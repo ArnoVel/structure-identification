@@ -102,7 +102,7 @@ class GaussianProcess(IGaussianProcess):
 
         # Compute K and guarantee it's positive definite.
         var_n = (self.sigma_n**2).clamp(self._eps, 1e5)
-        K = self.kernel(X, X)
+        K = self.kernel(X, X).double()
         K = (K + K.t()).mul(0.5)
         if self._device is not None:
             self._K = K + (self._reg + var_n) * torch.eye(X.shape[0]).to(self._device)
@@ -122,7 +122,7 @@ class GaussianProcess(IGaussianProcess):
             Y (Tensor): Training outputs.
             normalize_y (bool): Whether to normalize the outputs.
         """
-        self._non_normalized_Y = Y
+        self._non_normalized_Y = Y.double()
 
         if normalize_y:
             Y_mean = torch.mean(Y, dim=0)

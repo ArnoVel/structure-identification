@@ -202,10 +202,12 @@ def mahalanobis_squared(xi, xj, VI=None):
     Returns:
         Weighted matrix of all pair-wise distances (Tensor).
     """
+    xi, xj = xi.double(), xj.double()
     if VI is None:
         xi_VI = xi
         xj_VI = xj
     else:
+        VI = VI.double()
         xi_VI = xi.mm(VI)
         xj_VI = xj.mm(VI)
 

@@ -59,3 +59,7 @@ An example of the SLOPE fit for 13 basis functions can be found [in this folder]
 
 * One dimensional on synthetic data (can be applied to estimate marginal complexity)
 * Two dimensional on synthetic data (as an example of causality-agnostic distribution fitting)
+
+## Experiments and Visualisations
+Unless exceptions, every picture and experiment reported can be seen in [the tests/data subdir](./tests/data).
+However, for particularly large files or high number of pictures, a [different picture-only repo](https://github.com/ArnoVel/causal-pictures) is available!

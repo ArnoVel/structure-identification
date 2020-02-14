@@ -38,29 +38,10 @@ The best index fit is 1, which is a downward exponential trend.
 
 ![](./best_fits_high_n.png?raw=true)
 
+### Example of fitting comparisons for 13 mixed fits
 
-## Examples of fitting procedure
-The black is the true function, the blue is the generic fit (all basis functions together),
-and the green each time is each basis function alone
-### Toy Example, 13 basis functions
-Example one:  
-![](./slope_n_func_eq_13_one.png?raw=true)
-Example two:  
-![](./slope_n_func_eq_13_two.png?raw=true)
-
-### Mixed Fits, 8 basis functions
-Mixed fits cover all possible combinations of the list. We restrict the number of basis functions,
-as 2^8 is already 256, and displaying more graphs using matplotlib becomes a difficult task.
-
-The black line is the true function, the blue one is the generic fit, and the green one the corresponding
-mixed fit. The title each time specifies which basis function was chosen. Examples:
-`poly3` means `a*x^3`, while  `poly_inv2` means `a* 1/x^2`.  
-
-![](./slope_mixed_func_nfunc_eq_8.png?raw=true)
-
-### Example for 13 mixed fits
-
-It becomes too hard to plot, however a detailed report of the outputs of the fitting procedures on an example [can be found here](./res.out).
+The detail of the fits in as plots can be found [in this md file](./slope_graphs).  
+Mixed fits become too hard to plot over 8, however a detailed report of the outputs of the fitting procedures on an example [can be found here](./res.out).
 Using the data from each mixed fit, one can rank the models using the SLOPE scoring method.  
 
 As an example, using 13 functions (setting both torch & numpy seeds as 1020), on the following data
@@ -102,3 +83,4 @@ The lists are much longer, but only using the top 6 and bottom 6 value, one lear
   * the first rank at more than 2 inverse polynomials is 367 with score 6259.1533, much closer to average
 
 This is **obviously** data-depedent, but the chosen function was a polynomial multiplied with a sigmoid and a sinusoid (relatively simple).
+This process is what leads to the choice of one "best" model above

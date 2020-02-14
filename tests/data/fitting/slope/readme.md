@@ -40,7 +40,7 @@ The best index fit is 1, which is a downward exponential trend.
 
 ### Example of fitting comparisons for 13 mixed fits
 
-The detail of the fits in as plots can be found [in this md file](./slope_graphs).  
+The detail of the fits in as plots can be found [in this md file](./slope_graphs.md).  
 Mixed fits become too hard to plot over 8, however a detailed report of the outputs of the fitting procedures on an example [can be found here](./res.out).
 Using the data from each mixed fit, one can rank the models using the SLOPE scoring method.  
 

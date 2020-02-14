@@ -143,8 +143,9 @@ def viz_pair(save=True):
                                cause_type=c,
                                mechanism_type=m,
                                with_labels=False)
-        display = GridDisplay(num_items=5, nrows=-1, ncols=5)
 
+
+        display = GridDisplay(num_items=5, nrows=-1, ncols=5)
         for pair in DtSpl:
             def callback(ax, pair):
                 ax.scatter(pair[0],pair[1], s=10, facecolor='none', edgecolor='k')

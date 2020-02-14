@@ -211,7 +211,7 @@ class MechanismSampler(object):
         def fun(X):
             d = X.reshape(-1,1) + c.reshape(1,-1)
             # once we have [N,num_tanhs] , the broadcasting will be automatic
-            return (np.tanh(b*d)*a).sum(1,keepdims=True) + X*1e-02
+            return (np.tanh(b*d)*a).sum(1) + X*1e-02
         return fun
 
 class NoiseSampler(object):
@@ -255,14 +255,15 @@ class NoiseSampler(object):
             base_noise_sample = semicircular.rvs(size=self.n) * 0.8 # too big var apparently..
 
         if self.anm:
-            effect = self.effect_sample ; effect = (effect - effect.mean()) / effect.std()
+            effect = self.effect_sample
             # normalize to account for small sample deviations
             base_noise_sample = (base_noise_sample - base_noise_sample.mean()) / base_noise_sample.std()
 
+            idx = np.argsort(self.cause_sample)
             y = gamma * effect + (1-gamma)*base_noise_sample
 
         else:
-            effect = self.effect_sample ; effect = (effect - effect.mean()) / effect.std()
+            effect = self.effect_sample
             # normalize to account for small sample deviations, but after mapping X
             het_noise = base_noise_sample * self.noise_f(self.cause_sample)
             het_noise = (het_noise - het_noise.mean()) / het_noise.std()
@@ -327,6 +328,7 @@ class PairSampler(object):
 
     def generate_effect(self):
         self.effect_sample = self.mechanism(self.cause_sample)
+        effect = self.effect_sample ; self.effect_sample = (effect - effect.mean()) / effect.std()
 
     def generate_pair(self):
         noise_sampler = NoiseSampler(cause_sample= self.cause_sample,
@@ -334,7 +336,7 @@ class PairSampler(object):
                                      anm= self.anm,
                                      base_noise=self.base_noise)
         noisy_effect = noise_sampler.add_noise()
-
+        self.noisy_effect = noisy_effect
         return np.vstack((self.cause_sample, noisy_effect))
 
     def get_new_pair(self):

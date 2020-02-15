@@ -42,77 +42,88 @@ tensor([[ 5.1504e+00],
 parameter complexity scoring of generic fit tensor([312.5719])
 
  summary for fit #1, name:exp
-{   'model_score': tensor([48.7543]),
+{   'index': 1,
+    'model_score': tensor([48.7543]),
     'params': tensor([[ 0.0719],
         [-0.1520]]),
     'sse': tensor(525.6252)}
 --- end 1 ---
 
  summary for fit #2, name:poly1
-{   'model_score': tensor([45.7925]),
+{   'index': 2,
+    'model_score': tensor([45.7925]),
     'params': tensor([[-0.1782],
         [-0.2432]]),
     'sse': tensor(535.3971)}
 --- end 2 ---
 
  summary for fit #3, name:poly2
-{   'model_score': tensor([47.4153]),
+{   'index': 3,
+    'model_score': tensor([47.4153]),
     'params': tensor([[-0.0416],
         [-0.1267]]),
     'sse': tensor(551.8599)}
 --- end 3 ---
 
  summary for fit #4, name:poly3
-{   'model_score': tensor([48.5007]),
+{   'index': 4,
+    'model_score': tensor([48.5007]),
     'params': tensor([[-0.1754],
         [-0.0537]]),
     'sse': tensor(549.8409)}
 --- end 4 ---
 
  summary for fit #5, name:poly4
-{   'model_score': tensor([45.9945]),
+{   'index': 5,
+    'model_score': tensor([45.9945]),
     'params': tensor([[-0.1085],
         [-0.0227]]),
     'sse': tensor(553.8043)}
 --- end 5 ---
 
  summary for fit #6, name:poly5
-{   'model_score': tensor([49.7313]),
+{   'index': 6,
+    'model_score': tensor([49.7313]),
     'params': tensor([[-0.1731],
         [-0.0069]]),
     'sse': tensor(558.5891)}
 --- end 6 ---
 
  summary for fit #7, name:poly_inv1
-{   'model_score': tensor([49.3002]),
+{   'index': 7,
+    'model_score': tensor([49.3002]),
     'params': tensor([[-0.1727],
         [-0.0055]]),
     'sse': tensor(563.1844)}
 --- end 7 ---
 
  summary for fit #8, name:poly_inv2
-{   'model_score': tensor([49.9095]),
+{   'index': 8,
+    'model_score': tensor([49.9095]),
     'params': tensor([[-1.6382e-01],
         [-4.5132e-05]]),
     'sse': tensor(563.8160)}
 --- end 8 ---
 
  summary for fit #9, name:poly_inv3
-{   'model_score': tensor([50.0763]),
+{   'index': 9,
+    'model_score': tensor([50.0763]),
     'params': tensor([[-1.6939e-01],
         [-3.2363e-07]]),
     'sse': tensor(563.6242)}
 --- end 9 ---
 
  summary for fit #10, name:poly_inv4
-{   'model_score': tensor([49.9126]),
+{   'index': 10,
+    'model_score': tensor([49.9126]),
     'params': tensor([[-1.6719e-01],
         [-2.2471e-09]]),
     'sse': tensor(563.2510)}
 --- end 10 ---
 
  summary for fit #11, name:poly_inv5
-{   'model_score': tensor([49.3887]),
+{   'index': 11,
+    'model_score': tensor([49.3887]),
     'params': tensor([[-1.6861e-01],
         [-1.3460e-11]]),
     'sse': tensor(563.4398)}

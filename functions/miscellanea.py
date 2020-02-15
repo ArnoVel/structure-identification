@@ -90,21 +90,63 @@ def get_mode_hist(x,nbins=-1):
 
     return x_max[i_mode], y_max[i_mode]
 
-def _basic_univar_distplot(data, ax=None):
+def _basic_univar_distplot(data, ax=None, mode=True, kde=True,
+                           nbins=None, distname=""):
     ''' a basic univariate distribution plot with mean and mode
-        as verticale axes
+        as verticale axes. distname is a short string to add to describe dist
     '''
     if ax is None:
         ax = plt
-        sns.kdeplot(X, label="KDE ") # avoid giving plt as ax to sns
-
-    ax.hist(X, bins=2*N//50, alpha=0.4,
-            color='royalblue', density=True, label="True Histogram")
-    ax.axvline(X.mean(), color='r', linestyle='--',
-               linewidth=2, label='Mean')
-    ax.axvline(get_mode_hist(X)[0], color='orange', linestyle='--',
-               linewidth=2, label='Mode')
+        if kde:
+            sns.kdeplot(data, label=f"{distname} KDE") # avoid giving plt as ax to sns
+    if isinstance(nbins,int):
+        pass
+    elif nbins in ['auto', 'sturges', 'fd', 'doane', 'scott', 'rice','sqrt']:
+        pass
+    else:
+        nbins = 2*len(data)//50
+    ax.hist(data, bins=nbins, alpha=0.4,
+            color='royalblue', density=True, label="Histogram")
+    ax.axvline(data.mean(), color='r', linestyle='--',
+               linewidth=2, label=f'{distname} Mean')
+    if mode:
+        ax.axvline(get_mode_hist(data)[0], color='orange', linestyle='--',
+                   linewidth=2, label=f'{distname} Mode')
     plt.legend()
+
+def _compare_two_distplot(data1, data2, ax=None, mode=True,
+                          kde=True, nbins=None, distnames=["",""]):
+    ''' a basic univariate distribution plot with mean and mode
+        as verticale axes. distname is a short string to add to describe dist
+    '''
+    assert len(distnames)==2
+    if ax is None:
+        ax = plt
+        if kde:
+            sns.kdeplot(data1, label=f"{distnames[0]} KDE", color='b') # avoid giving plt as ax to sns
+            sns.kdeplot(data2, label=f"{distnames[1]} KDE", color='r')
+
+    if isinstance(nbins,int):
+        nbins1, nbins2 = nbins, nbins
+    elif nbins in ['auto', 'sturges', 'fd', 'doane', 'scott', 'rice','sqrt']:
+        nbins1, nbins2 = nbins, nbins
+    else:
+        nbins1, nbins2 = 2*len(data1)//50, 2*len(data2)//50
+
+    ax.hist(data1, bins=nbins1, alpha=0.4,
+            color='royalblue', density=True, label=f"{distnames[0]} Histogram")
+    ax.axvline(data1.mean(), color='steelblue', linestyle='--',
+               linewidth=2, label=f'{distnames[0]} Mean')
+
+    ax.hist(data2, bins=nbins2, alpha=0.4,
+            color='indianred', density=True, label=f"{distnames[1]} Histogram")
+    ax.axvline(data2.mean(), color='tomato', linestyle='--',
+               linewidth=2, label=f'{distnames[1]} Mean')
+    if mode:
+        ax.axvline(get_mode_hist(data1)[0], color='navy', linestyle='--',
+                   linewidth=2, label=f'{distnames[0]} Mode')
+        ax.axvline(get_mode_hist(data2)[0], color='darkred', linestyle='--',
+                   linewidth=2, label=f'{distnames[1]} Mode')
 
 
 def _mult_reduce(intlist):

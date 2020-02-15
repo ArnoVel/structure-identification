@@ -125,6 +125,10 @@ def _log2_nCk(n,k, dtype='torch'):
         return _log2_factorial(n,dtype=dtype) - _log2_factorial(k,dtype=dtype) - _log2_factorial(n-k,dtype=dtype)
 
 def _log_n(z):
+    ''' implement optimal code on integers z>1 based on
+        https://projecteuclid.org/download/pdf_1/euclid.aos/1176346150,
+        log*(y) = log(y) + log(log(y)) + log(log(log(y))) + ... = sum_i log^(i)(y)
+    '''
     if isinstance(z,torch.Tensor):
         z = torch.ceil(z)
         if z < 1:
@@ -164,6 +168,16 @@ def _log_n(z):
 
     else:
         raise NotImplementedError(complain,type(z))
+
+def _ceil(z):
+    if isinstance(z,torch.Tensor):
+        return torch.ceil(z)
+    elif isinstance(z,np.ndarray):
+        return np.ceil(z)
+    elif isinstance(z,numbers.Real):
+        return np.ceil(z)
+    else:
+        raise ValueError("Either torch tensors or numpy arrays",type(z))
 
 def _get_dtype(x):
     if isinstance(x,torch.Tensor):
@@ -289,15 +303,19 @@ def _set_resolution(x, resolution=RESOLUTION, method='mindiff'):
 
 def _parameter_score(params, thresh=1000):
     summand = 0
-    params = _nan_to_zero(params)
-    for p in params:
+    params_ = _nan_to_zero(params)
+    for p in params_:
         p_abs_ = _abs(p)
         p_temp_ = p_abs_
         precision_ = 1.0
-        while (p_temp_ < thresh):
-            p_temp_ = p_temp_ * 10
-            precision_ = precision_ + 1
-        summand = summand + 1 + _log_n(p_temp_) + _log_n(precision_)
+        # choice of SLOPE authors: don't encode 0.
+        # if we follow the original paper, it is possible
+        # to encode 0 and negative ints too... not that important
+        if p!=0:
+            while (p_temp_ < thresh):
+                p_temp_ = p_temp_ * 10
+                precision_ = precision_ + 1
+            summand = summand + 1 + _log_n(_ceil(p_temp_)) + _log_n(precision_)
     return summand
 
 def _sum_sq_err(y,y_hat):

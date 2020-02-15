@@ -24,16 +24,17 @@ def _np_data(n=700,pows=[2,3]):
     y = np.sin(x)*sigmoid(x)*(np.power(x-1,pows[0])/5 - np.power(x+1, pows[1])/5)
     return x,y,e
 
+SEED = 1020
+torch.manual_seed(SEED)
+np.random.seed(SEED)
+
 pp = ppr.PrettyPrinter(indent=4)
 #x,y,e = _torch_data(pows=[1,2])
-x,y,e = _torch_data(pows=[2,3])
+x,y,e = _torch_data(pows=[1,3])
 e = 1.5*e # try to have higher noise levels
 y_n = y+e ; y_n = (y_n - y_n.mean(0)) / y_n.std(0)
 
 y_disp = (y-y.mean(0)) / y.std(0)
-SEED = 1020
-torch.manual_seed(SEED)
-np.random.seed(SEED)
 
 nofc = 13
 

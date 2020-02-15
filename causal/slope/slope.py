@@ -218,7 +218,6 @@ class SlopeFunction:
             self._marginal_params[i] = torch.lstsq(y.view(-1,1),_X_i).solution[:2]
         elif isinstance(x,np.ndarray):
             _X_i = self._X.T[[0,i],:].T
-            print(_X_i.shape)
             sol, residuals, rank, singular_vals = np.linalg.lstsq(_X_i,y.reshape(-1,1), rcond=None)
             self._marginal_params[i] = sol
         else:

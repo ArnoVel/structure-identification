@@ -274,19 +274,22 @@ class NoiseSampler(object):
         return y
 
 
-class PairSampler(object):
-    """ Materializes a bivariate FCM distribution:
+class CausalPairSampler(object):
+    """ Materializes a bivariate causal FCM distribution:
         Once one sets the type of noise,cause,mechanism,
         One can call a succession of
         generate_cause --> fit_mechanism --> generate_effect --> generate_pair
         to obtain a new bivariate sample following the same
         FCM distribution with fixed sample size.
+        The resulting model is (x,y) so that:
+        C ~ cause, f ~ mechanism, n ~ noise ; y = f(c) + n
+
         Failure to call each of these methods one after the other
         will lead to nonsensical samples
     """
 
     def __init__(self, n, anm=True, base_noise='normal', cause_type='gmm', mechanism_type='spline'):
-        super(PairSampler, self).__init__()
+        super(CausalPairSampler, self).__init__()
         self.n = n
         self.mechanism_type = mechanism_type
         self.base_noise = base_noise
@@ -359,7 +362,7 @@ class DatasetSampler(object):
         self.N = N
         self.n = n
         self.anm = anm
-        self.pSampler = PairSampler(n,
+        self.pSampler = CausalPairSampler(n,
                                 anm=self.anm,
                                 base_noise=base_noise,
                                 cause_type=cause_type,
@@ -384,7 +387,145 @@ class DatasetSampler(object):
         else:
             raise StopIteration
 
+## END OF DIRECT CAUSAL SAMPLING
 
+class ConfoundedPairSampler(object):
+    """ Materializes a bivariate confounded FCM distribution:
+        Once one sets the type of z_dist, mech_x, mech_y, noise_x, noise_y
+        One can call (twice) a succession of
+        generate_cause --> fit_mechanism --> generate_effect --> generate_pair
+        to obtain a new bivariate sample following the same
+        FCM distribution with fixed sample size.
+        The resulting model is (x,y) so that:
+        Z ~ z_dist, f_x ~ mech_x, n_x ~ noise_x ; f_y ~ mech_y, n_y ~ noise_y
+        x = f_x(z) + n_x ; y = f_y(z) + n_y
+
+        Failure to call each of these methods one after the other
+        will lead to nonsensical samples.
+
+        The arguments are :
+        base_noise = [noise_x, noise_y]
+        mechanism_type = [mech_x, mech_y]
+        confounder_type = z_dist
+    """
+
+    def __init__(self, n, anm=True, base_noise=['normal','normal'], confounder_type='gmm',
+                       mechanism_type=['spline','spline']):
+        super(ConfoundedPairSampler, self).__init__()
+        self.n = n
+        self.mechanism_type = mechanism_type
+        self.base_noise = base_noise
+        self.anm = anm
+
+        cause_sampler = CauseSampler(sample_size=n)
+        cause_choice = {
+                        'gmm': cause_sampler.gaussian_mixture,
+                        'subgmm': cause_sampler.subgaussian_mixture,
+                        'supgmm': cause_sampler.supergaussian_mixture,
+                        'subsupgmm': cause_sampler.subsupgaussian_mixture,
+                        'uniform': cause_sampler.uniform,
+                        'mixtunif': cause_sampler.uniform_mixture,
+                        }
+        try:
+            self.cause_gen = cause_choice[confounder_type]
+        except Exception as e:
+            raise NotImplementedError("cause distribution not implemented: ",confounder_type)
+        self.mechanism = None
+        self.confounder_sample = []
+        self.x_sample, self.y_sample = [], []
+
+    def fit_mechanism(self):
+        assert len(self.confounder_sample)>0 ; assert len(self.mechanism_type) == 2
+        mech_x,  mech_y = MechanismSampler(self.confounder_sample), \
+                          MechanismSampler(self.confounder_sample)
+
+        self.mechanism = [ mechanism_choice(mech_x, self.mechanism_type[0]),
+                           mechanism_choice(mech_x, self.mechanism_type[0])
+                         ]
+
+    def generate_cause(self):
+        self.confounder_sample = self.cause_gen()
+
+    def generate_effect(self):
+        self.x_sample = self.mechanism[0](self.confounder_sample)
+        self.y_sample = self.mechanism[1](self.confounder_sample)
+        x,y = self.x_sample, self.y_sample
+        self.x_sample = (x - x.mean()) / x.std()
+        self.y_sample = (y - y.mean()) / y.std()
+
+    def generate_pair(self):
+        noise_sampler_x = NoiseSampler(cause_sample= self.confounder_sample,
+                                     effect_sample= self.x_sample,
+                                     anm= self.anm,
+                                     base_noise=self.base_noise[0])
+
+        noise_sampler_y = NoiseSampler(cause_sample= self.confounder_sample,
+                                     effect_sample= self.y_sample,
+                                     anm= self.anm,
+                                     base_noise=self.base_noise[1])
+        noisy_x = noise_sampler_x.add_noise()
+        noisy_y = noise_sampler_x.add_noise()
+        self.noisy_x, self.noisy_y = noisy_x, noisy_y
+
+        return np.vstack((self.noisy_x, self.noisy_y))
+
+    def get_new_pair(self):
+        """ assumes the class init was called correctly. """
+        self.generate_cause()
+        self.fit_mechanism()
+        self.generate_effect()
+        pair = self.generate_pair()
+        return pair
+
+class ConfoundedDatasetSampler(object):
+    def __init__(self, N, n=1000,
+                anm = True,
+                base_noise=['normal','normal'],
+                confounder_type='gmm',
+                mechanism_type=['spline','spline'],
+                with_labels=False):
+        super(ConfoundedDatasetSampler, self).__init__()
+        self.N = N
+        self.n = n
+        self.anm = anm
+        self.pSampler = ConfoundedPairSampler(n,
+                                anm=self.anm,
+                                base_noise=base_noise,
+                                confounder_type=confounder_type,
+                                mechanism_type=mechanism_type)
+        self.anm = anm
+        self.mechanism_type = mechanism_type
+        self.base_noise = base_noise
+        self.with_labels = with_labels
+
+    def __iter__(self):
+        self.index = 0
+        return self
+
+    def __next__(self):
+        if self.index <= self.N-1:
+            pair = self.pSampler.get_new_pair()
+            self.index += 1
+            if self.with_labels:
+                return pair, 0
+            else:
+                return pair
+        else:
+            raise StopIteration
+## OLD ROUTINES, SOME ARE NECESSARY TO RUN THE NEW ONES
+
+def mechanism_choice(mech_sampler, mech_type):
+    if mech_type == 'spline':
+        mechanism = mech_sampler.CubicSpline()
+    elif mech_type == 'sigmoidam':
+        mechanism = mech_sampler.SigmoidAM()
+    elif mech_type == 'tanhsum':
+        mechanism = mech_sampler.tanhSum()
+    elif mech_type == 'rbfgp':
+        mechanism = mech_sampler.RbfGP()
+    else:
+        raise NotImplementedError("This mechanism type was not expected", mech_type)
+    return mechanism
 
 def _unif_mixture_sampler(n,weights,means,stds):
     unif_choice = rd.choice(a=len(weights),

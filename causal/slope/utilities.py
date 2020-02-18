@@ -139,6 +139,8 @@ def _log_n(z):
             while log_star > 0:
                 log_star = _log(log_star)
                 summand += log_star
+        # 2.865064 is the sum of the 2^(logstar(i)), adding it to the codelength
+        # enforces the kraft universal prior 2^(-L(i)) = Q(i) sums to 1 over all i
         return summand + _log(torch.Tensor([2.865064]))
 
     elif isinstance(z,np.ndarray):
@@ -317,6 +319,15 @@ def _parameter_score(params, thresh=1000):
                 precision_ = precision_ + 1
             summand = summand + 1 + _log_n(_ceil(p_temp_)) + _log_n(precision_)
     return summand
+
+def _margin_score(x, type='uniform'):
+    if type=='uniform':
+        resolution = _set_resolution(x)
+        return - len(x)* _log(resolution)
+    elif type=='gaussian':
+        return _gaussian_score_emp(x)j
+    else:
+        raise ValueError("Type unknown",type)
 
 def _sum_sq_err(y,y_hat):
     assert type(y)==type(y_hat)

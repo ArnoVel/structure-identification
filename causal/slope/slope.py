@@ -358,3 +358,4 @@ class SlopeFunction:
         mean_c, sd_c, len_x = counts.mean(), counts.std(), len(x)
 
         _r_bestfit = self._find_best_mixed_fit(x,y) if mixed else self._find_best_fit_index(x,y)
+        # NOT FINISHED

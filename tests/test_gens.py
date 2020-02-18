@@ -163,7 +163,47 @@ def viz_pair(save=True):
         else:
             plt.show()
 
+
+def viz_confouded(save=True):
+    SEED = 1020
+    torch.manual_seed(SEED)
+    np.random.seed(SEED)
+    causes = ['gmm', 'subgmm','supgmm','subsupgmm','uniform','mixtunif']
+    base_noises = ['normal', 'student', 'triangular', 'uniform',
+                   'beta', 'semicircular']
+    mechanisms = ['spline','sigmoidam','tanhsum','rbfgp']
+    anms = [False, True]
+
+    for anm,c,bn_x,bn_y,m_x,m_y in product(anms,causes,
+                                            base_noises, base_noises,
+                                            mechanisms,mechanisms):
+        print(f'anm? {anm}, cause: {c}, base_noise: {bn_x,bn_y}, mechanism: {m_x,m_y}')
+        DtSpl = ConfoundedDatasetSampler(N=5, n=1000, anm=anm,
+                                        base_noise=[bn_x,bn_y],
+                                        confounder_type=c,
+                                        mechanism_type=[m_x,m_y],
+                                        with_labels=False)
+
+        display = GridDisplay(num_items=5, nrows=-1, ncols=5)
+        for pair in DtSpl:
+            def callback(ax, pair):
+                ax.scatter(pair[0],pair[1], s=10, facecolor='none', edgecolor='k')
+                # idx = np.argsort(pair[0])
+                # x,y = pair[0][idx], pair[1][idx] ; spl = UnivariateSpline(x, y)
+                # x_display = np.linspace(x.min(), x.max(), 1000)
+                # ax.plot(x_display, spl(x_display), 'r--')
+            display.add_plot(callback=(lambda ax: callback(ax,pair)))
+        display.fig.suptitle(f'anm? {anm}, cause: {c}, base_noise: {bn_x,bn_y}, mechanism: {m_x,m_y}', fontsize=20)
+        display.fig.tight_layout(rect=[0, 0.03, 1, 0.93])
+        if save:
+            _write_nested(f'./tests/data/fcm_examples/pairs/anm_{anm}_c_{c}_bn_{bn_x}+{bn_y}_m_{m_x}+{m_y}',
+                          callback= lambda fp: plt.savefig(fp,dpi=70))
+            #plt.savefig(f'./data/fcm_examples/pairs/anm_{anm}_c_{c}_bn_{bn}_m_{m}', dpi=40)
+        else:
+            plt.show()
+
 if __name__ == '__main__':
     #viz_cause()
     #viz_mechanisms()
-    viz_pair(save=True)
+    #viz_pair(save=True)
+    viz_confouded(save=False)

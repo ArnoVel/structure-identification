@@ -157,21 +157,24 @@ def _anm_hypercompression_bounds(
 
     return score_xy, score_yx
 
+def _plot_hypercomp_anm_dataset(N,n,c,bn,m, mixed=True, nofc=10):
+
+    score_xy, score_yx = _anm_hypercompression_bounds(N=N,n=n,c=c,bn=bn,m=m,mixed=mixed, nofc=nofc)
+
+    L0 = (score_xy + score_yx)/2
+    abs_bit_gap = np.abs(L0 - score_xy)
+    _basic_univar_distplot(abs_bit_gap, distname='abs bit gap', mode=False, kde=False, nbins='auto')
+
+    plt.axvline(-np.log2(alpha), color='k', linestyle='-.',
+               linewidth=2, label=f'Significance gap'+r" ($\alpha=$"+f"{alpha})")
+    plt.legend()
+    plt.title(f"Compression Absolute Bit Gap \n on ANM-Dataset ({c},{bn},{m})")
+    plt.show()
+    bit_gap_xy = L0 - score_xy ; bit_gap_yx = L0 - score_yx
+    _compare_two_distplot(bit_gap_xy, bit_gap_yx, distnames=['X->Y','Y->X'], mode=False, nbins='auto')
+    plt.title(f"Compression Signed Bit Gap on ANM-Dataset ({c},{bn},{m})")
+    plt.legend() ; plt.show()
+
 c, bn, m = 'gmm','normal','spline' ; alpha = 1e-02 ; n=1000
-
 #_plot_hypcomp_bootstrap(c,bn,n,m,alpha)
-score_xy, score_yx = _anm_hypercompression_bounds(N=200,n=1000,c=c,bn=bn,m=m,mixed=True)
-
-L0 = (score_xy + score_yx)/2
-abs_bit_gap = np.abs(L0 - score_xy)
-_basic_univar_distplot(abs_bit_gap, distname='abs bit gap', mode=False, kde=False, nbins='auto')
-
-plt.axvline(-np.log2(alpha), color='k', linestyle='-.',
-           linewidth=2, label=f'Significance gap'+r" ($\alpha=$"+f"{alpha})")
-plt.legend()
-plt.title(f"Compression Absolute Bit Gap \n on ANM-Dataset ({c},{bn},{m})")
-plt.show()
-bit_gap_xy = L0 - score_xy ; bit_gap_yx = L0 - score_yx
-_compare_two_distplot(bit_gap_xy, bit_gap_yx, distnames=['X->Y','Y->X'], mode=False, nbins='auto')
-plt.title(f"Compression Signed Bit Gap on ANM-Dataset ({c},{bn},{m})")
-plt.legend() ; plt.show()
+_plot_hypercomp_anm_dataset(N=200,n=1000,c=c,bn=bn,m=m,mixed=True)

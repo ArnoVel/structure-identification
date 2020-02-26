@@ -223,12 +223,10 @@ def causal_fit():
 def c2st_tests(n=500, test='mu'):
     if test=='mu':
         for mu in torch.linspace(0,1,10):
-            P,Q = torch.randn(550,2), torch.randn(550,2)+mu*torch.ones(1,2)
+            P,Q = torch.randn(n,2), torch.randn(n,2)+mu*torch.ones(1,2)
             print(c2st.knn_c2st(P,Q))
             print(c2st.neural_net_c2st(P,Q))
             print(f'end of loop for mu={mu}')
 
 
-# causal_fit()
-c2st_tests(n=500)
-c2st_tests(n=1000)
+causal_fit()

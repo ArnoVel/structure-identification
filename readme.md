@@ -51,15 +51,7 @@ Classifier Two Sample Tests (C2ST) have been introduced and tested [in this pape
 * C2ST-KNN: K-nearest neighbors classifier with `k=floor(n_te/2)`. Usually worse than neural nets.
 
 The basic idea is that under H0 (P=Q) , the classifier cannot exceed 50% accuracy and `n*acc` is distributed as `Binomial(n_te, 0.5)`, then `acc` under H0 can be approximated as `Normal(0.5, 0.25/n_te)` in order to use the normal approximation to find a p-value on the accuracy.
-
-**A simple experiment:** Distinguish means of gaussians (0 vs `m` ranging from 0.1 to 1).  
-
-In this case, `m=1` is easily distringuished by both classifiers, with accuracy 75% leading to `pval=0`. The biggest gap for which this happens is `m=0.5`, and at `m=0.4` the values are non-zero but NN has a pval of approx `1e-07` and KNN `1e-03`.
-* at `m=0.3`, NN has pval `1e-05` and KNN `1e-02` (passes at `alpha=0.01`)
-* at `m=0.2`, NN has pval `0.03` and KNN `0.80` (both pass at `alpha=0.01`)
-
-etc ...
-
+Some basic examples can be found [in this subdirectory](tests/c2st).
 
 ## Bivariate Causal Algorithms
 

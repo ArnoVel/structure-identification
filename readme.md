@@ -48,9 +48,9 @@ allowing backpropagation w.r.t each inputs/parameters.
 Classifier Two Sample Tests (C2ST) have been introduced and tested [in this paper](https://arxiv.org/pdf/1610.06545.pdf). Here, we [re-implement](dependence/c2st) and slightly adapt the lua code of the authors, which includes
 * C2ST-NN: using a shallow neural network classifier (ReLU + Sigmoid) with default 20 hidden units.
   While adding layers/hidden units is a good idea, we usually work with 500-5000 samples per distribution, and/or aim for accuracy higher than 55% to reject P=Q
-* C2ST-KNN: K-nearest neighbors classifier with `k=floor(n_te/2)`. Usually worse for neural nets.
+* C2ST-KNN: K-nearest neighbors classifier with `k=floor(n_te/2)`. Usually worse than neural nets.
 
-The basic idea is that under H0 (P=Q) , the classifier cannot exceed 50% accuracy and `n*acc` is distributed as `Binomial(n_te, 0.5)` which can be approximated as `Normal(0.5, 0.25/n_te)` and using the normal approximation to find a p-value on the resulting accuracy.
+The basic idea is that under H0 (P=Q) , the classifier cannot exceed 50% accuracy and `n*acc` is distributed as `Binomial(n_te, 0.5)`, then `acc` under H0 can be approximated as `Normal(0.5, 0.25/n_te)` in order to use the normal approximation to find a p-value on the accuracy.
 
 **A simple experiment:** Distinguish means of gaussians (0 vs `m` ranging from 0.1 to 1).  
 

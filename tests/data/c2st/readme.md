@@ -26,7 +26,7 @@ for mu in torch.linspace(0,1,10):
 
 ## ANM Causal Sinkhorn fit using CS2T as Goodness-of-Fit Criterion
 
-More details will be given in the future, but sampling causal data using `functions/generators/generators.py`, and fitting causal and anticausal models, we can then compare how similar they are to the origin point cloud.
+More details will be given in the future, but the experiment is as follows. Sampling causal data using `functions/generators/generators.py` and fitting causal and anticausal models, we can then compare how similar they are to the origin point cloud.
 In this case, we sample from a random ANM using `random.choice` with seed set to 22, getting the triplet `('subgmm', 'student', 'spline')`.
 
 Running sinkhorn L1 loss minimization with a two layer network, we obtain the fits for `X --> Y` as

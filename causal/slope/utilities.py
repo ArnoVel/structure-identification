@@ -325,7 +325,7 @@ def _margin_score(x, type='uniform'):
         resolution = _set_resolution(x)
         return - len(x)* _log(resolution)
     elif type=='gaussian':
-        return _gaussian_score_emp(x)j
+        return _gaussian_score_emp(x)
     else:
         raise ValueError("Type unknown",type)
 

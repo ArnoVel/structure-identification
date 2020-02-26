@@ -172,7 +172,7 @@ def viz_confouded(save=True):
     base_noises = ['normal', 'student', 'triangular', 'uniform',
                    'beta', 'semicircular']
     mechanisms = ['spline','sigmoidam','tanhsum','rbfgp']
-    anms = [False, True]
+    anms = [ False,True]
 
     for anm,c,bn_x,bn_y,m_x,m_y in product(anms,causes,
                                             base_noises, base_noises,
@@ -188,15 +188,13 @@ def viz_confouded(save=True):
         for pair in DtSpl:
             def callback(ax, pair):
                 ax.scatter(pair[0],pair[1], s=10, facecolor='none', edgecolor='k')
-                # idx = np.argsort(pair[0])
-                # x,y = pair[0][idx], pair[1][idx] ; spl = UnivariateSpline(x, y)
-                # x_display = np.linspace(x.min(), x.max(), 1000)
-                # ax.plot(x_display, spl(x_display), 'r--')
+                idx = np.argsort(DtSpl.pSampler.x_sample)
+                ax.scatter(DtSpl.pSampler.x_sample[idx], DtSpl.pSampler.y_sample[idx], facecolor='r', s=14, alpha=0.7)
             display.add_plot(callback=(lambda ax: callback(ax,pair)))
-        display.fig.suptitle(f'anm? {anm}, cause: {c}, base_noise: {bn_x,bn_y}, mechanism: {m_x,m_y}', fontsize=20)
+        display.fig.suptitle(f'Confounded: anm? {anm}, cause: {c}, base_noise: {bn_x,bn_y}, mechanism: {m_x,m_y}', fontsize=20)
         display.fig.tight_layout(rect=[0, 0.03, 1, 0.93])
         if save:
-            _write_nested(f'./tests/data/fcm_examples/pairs/anm_{anm}_c_{c}_bn_{bn_x}+{bn_y}_m_{m_x}+{m_y}',
+            _write_nested(f'./tests/data/fcm_examples/pairs/cdf_anm_{anm}_c_{c}_bn_{bn_x}+{bn_y}_m_{m_x}+{m_y}',
                           callback= lambda fp: plt.savefig(fp,dpi=70))
             #plt.savefig(f'./data/fcm_examples/pairs/anm_{anm}_c_{c}_bn_{bn}_m_{m}', dpi=40)
         else:

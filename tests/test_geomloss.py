@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 from random import choices, choice, seed
+from itertools import product
 from imageio import imread
 from matplotlib import pyplot as plt
 import torch
@@ -9,12 +10,19 @@ from geomloss import SamplesLoss
 from functions.generators.generators import *
 from functions.miscellanea import _write_nested, _plotter, GridDisplay
 from dependence import c2st
+from causal.generative.geometric import CausalGenGeomNet,GenerativeGeomNet
+from causal.slope.utilities import _log, _parameter_score
 
 
 use_cuda = torch.cuda.is_available()
 dtype    = torch.cuda.FloatTensor if use_cuda else torch.FloatTensor
 
 print(f'Using cuda? {"yes" if use_cuda else "no"}, data type is then {dtype}')
+
+def _score_wrapper(net):
+    param_flat = torch.cat([p.detach().flatten() for p in net.parameters()])
+    return _parameter_score(param_flat)
+
 
 def data(N,dim=2):
     if dim==2:
@@ -114,87 +122,6 @@ def gradient_flow(loss, lr=.05, loss_info=None) :
                           fontsize=10)
     display.fig.tight_layout(rect=[0, 0.03, 1, 0.93])
 
-def fcm_gradient_flow(data, loss, lr=.05, loss_info=None, direction='->') :
-    """updates net params along the gradient of the cost function, using a simple Euler scheme.
-
-    Parameters:
-        loss ((x_i,y_j) -> torch float number):
-            Real-valued loss function.
-        lr (float, default = .05):
-            Learning rate, i.e. time step.
-    """
-
-    # Parameters for the gradient descent
-    total_ = 5 ; num_displays = 6
-    Nsteps = int(total_/lr)+1 # base was 5/lr
-    display_its = [int(t/lr) for t in torch.linspace(0,total_,num_displays)]
-    display = GridDisplay(num_items=num_displays, nrows=-1, ncols=3)
-
-    print(f'display its: {display_its}')
-    # Use colors to identify the particles
-    colors = (10*data[:,0]).cos() * (10*data[:,1]).cos()
-    colors = colors.detach().cpu().numpy()
-
-    # Make sure that we won't modify the reference samples
-    XY_, X_, Y_ = data.clone(), data[:,0:1].clone(), data[:,1:2].clone()
-    XY_, X_, Y_ = XY_.type(dtype), X_.type(dtype), Y_.type(dtype)
-
-    # get basic setup for FCM y = f(x,e ; params)
-    num_hiddens = 20
-    f_net = torch.nn.Sequential(torch.nn.Linear(2,num_hiddens),
-                                torch.nn.ReLU(),
-                                torch.nn.Linear(num_hiddens,num_hiddens),
-                                torch.nn.ReLU(),
-                                torch.nn.Linear(num_hiddens,1)
-                                )
-    f_net.register_buffer('noise',torch.Tensor(len(X_), 1))
-    f_net = f_net.type(dtype)
-
-    optim = torch.optim.Adam(f_net.parameters(), lr=lr)
-    # We're going to perform gradient descent on Loss(α, β)
-    # wrt. the positions x_i of the diracs masses that make up α:
-
-    t_0 = time.time()
-    for i in range(Nsteps):
-        optim.zero_grad()
-        # Compute cost and gradient
-        f_net.noise.normal_()
-        if direction == '->':
-            Y_hat_ = f_net( torch.cat( [X_, f_net.noise], 1 ) )
-            XY_hat_ = torch.cat( [X_, Y_hat_],1)
-        elif direction == '<-':
-            X_hat_ = f_net( torch.cat( [Y_, f_net.noise], 1 ) )
-            XY_hat_ = torch.cat( [X_hat_, Y_] ,1)
-        L_αβ = loss(XY_, XY_hat_)
-        L_αβ.backward()
-        if i in display_its : # display
-            print(f'loop iter {i}')
-            #print(f'check gradient and loss magnitudes: {g.norm().data, L_αβ.data}')
-            def callback(ax, x_i, y_j, colors):
-                plt.set_cmap("hsv")
-                display_samples(ax, XY_, [(.55,.55,.95)])
-                display_samples(ax, XY_hat_, colors)
-                ax.set_title("t = {:1.2f}".format(lr*i))
-
-                #plt.axis([0,1,0,1])
-                #plt.gca().set_aspect('equal', adjustable='box')
-                plt.xticks([], []); plt.yticks([], [])
-                plt.tight_layout()
-            display.add_plot(callback=(lambda ax: callback(ax, XY_, XY_hat_, colors)))
-
-
-        # in-place modification of the tensor's values
-        optim.step()
-
-    display.fig.suptitle((f"Gradient flows with loss {loss_info};"+
-                          f"\n T = {lr*i}, elapsed time: {int(1e03*(time.time() - t_0)/Nsteps)/1e03}s/it"+
-                          f"\n on ANM data {c,m,bn}"),
-                          fontsize=10)
-    display.fig.tight_layout(rect=[0, 0.03, 1, 0.93])
-    print(f'C2ST test for XY = XY_hat')
-    nnt = c2st.neural_net_c2st(XY_, XY_hat_.detach()) ; knnt = c2st.knn_c2st(XY_,XY_hat_.detach())
-    print(f'c2st neural test: acc={nnt[0]}, P(T>acc)={nnt[1]},  (reject if pval < 1e-02)')
-    print(f'c2st knn test: acc={knnt[0]}, P(T>acc)={knnt[1]},  (reject if pval < 1e-02)')
 
 def two_dims_fit():
     N, M = (100, 100) if not use_cuda else (3000, 3000) # if not same # pts for D1 D2
@@ -210,23 +137,58 @@ def two_dims_fit():
     gradient_flow( SamplesLoss(**loss_info) , lr=5e-02, loss_info=loss_info)
     plt.show()
 
-def causal_fit():
-    N, M = (100, 100) if not use_cuda else (1000, 1000) # if not same # pts for D1 D2
-    C = torch.rand(2,2) ; C = C.t() @ C
-    XY = anm_data(N, dim=2, SEED=22) #Y_j = data(N, dim=2)
-    loss_info = {"loss":"sinkhorn", "p":1, "blur":1e-01, "scaling":0.7}
-    fcm_gradient_flow( data=XY,  loss=SamplesLoss(**loss_info) , lr=5e-02, loss_info=loss_info, direction='->')
-    plt.show()
-    fcm_gradient_flow( data=XY,  loss=SamplesLoss(**loss_info) , lr=5e-02, loss_info=loss_info, direction='<-')
-    plt.show()
+def test_geom_nets(XY):
+    XY = XY.type(dtype); X,Y = XY[:,0].clone(), XY[:,1].clone()
+    causal_geom_net = CausalGenGeomNet(loss="sinkhorn", p=1)
+    causal_geom_net.set_data(X,Y)
+    causal_geom_net.fit_two_directions()
 
-def c2st_tests(n=500, test='mu'):
-    if test=='mu':
-        for mu in torch.linspace(0,1,10):
-            P,Q = torch.randn(n,2), torch.randn(n,2)+mu*torch.ones(1,2)
-            print(c2st.knn_c2st(P,Q))
-            print(c2st.neural_net_c2st(P,Q))
-            print(f'end of loop for mu={mu}')
+    for t in ["mmd-gamma","c2st-nn","c2st-knn"]:
+        data_prob = causal_geom_net.data_probability(test_type=t, num_tests=5)
+        print(f'obtained -log(likelihood) for test {t}: causal {-_log(data_prob[0])} vs. anticausal {-_log(data_prob[1])}')
+    test_losses = causal_geom_net.test_loss()
+    print(f'test loss bits with exp likelihood: causal {-_log(torch.exp(-test_losses[0]))} vs. anticausal {-_log(torch.exp(-test_losses[1]))}')
+    print(f'parameter compression: X --> Y {_score_wrapper(causal_geom_net._fcm_net_causal)}')
+    print(f'parameter compression: Y --> X {_score_wrapper(causal_geom_net._fcm_net_anticausal)}')
+
+def _sample_anms_geom_nets(N=5):
+    causes = ['gmm', 'subgmm','supgmm','subsupgmm','uniform','mixtunif']
+    base_noises = ['normal', 'student', 'triangular', 'uniform',
+                   'beta', 'semicircular']
+    mechanisms = ['spline','sigmoidam','tanhsum','rbfgp']
+
+    for c,m,bn in product(causes, mechanisms, base_noises):
+        print(f'testing GeomLosses on ANM data with N={N} datasets')
+        print(f'the ANM structure is (cause,mechanism,noise) = {c,m,bn}')
+        DtSpl = DatasetSampler(N=N, n=1000, anm=True,
+                               base_noise=bn,
+                               cause_type=c,
+                               mechanism_type=m,
+                               with_labels=False)
+        t_0 = time.time()
+        for XY in DtSpl:
+            test_geom_nets(torch.from_numpy(XY)) # prints for all types of tests the -log_2(P) with P using 2st's
+        print(f'testing 4 types of "likelihoods" for N=5 requires {int(1e03*(time.time()-t_0)/N)/1e03} secs / dataset @ n=1000')
+        print('\n ----------- end anm type -----------\n')
 
 
-causal_fit()
+def visualize_geom_net(XY):
+    XY = XY.type(dtype); X,Y = XY[:,0].clone(), XY[:,1].clone()
+    geom_net = GenerativeGeomNet(loss="sinkhorn", p=1)
+    geom_net.set_data(X,Y)
+    geom_net.plot_training_samples()
+
+    print(f'C2ST test for XY = XY_hat')
+    nnt = c2st.neural_net_c2st(geom_net._XY, geom_net._XY_hat.detach()) ; knnt = c2st.knn_c2st(geom_net._XY, geom_net._XY_hat.detach())
+    print(f'c2st neural test: acc={nnt[0]}, P(T>acc)={nnt[1]},  (reject if pval < 1e-02)')
+    print(f'c2st knn test: acc={knnt[0]}, P(T>acc)={knnt[1]},  (reject if pval < 1e-02)')
+
+    print(f'parameter compression: {_score_wrapper(geom_net._net)}')
+
+
+N, M = (100, 100) if not use_cuda else (1000, 1000) # if not same # pts for D1 D2
+XY = anm_data(N, dim=2, SEED=22) #Y_j = data(N, dim=2)
+# causal_fit()
+# _sample_anms_geom_nets(N=5)
+# visualize_geom_net(XY)
+test_geom_nets(XY)

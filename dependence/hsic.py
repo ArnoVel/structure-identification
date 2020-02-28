@@ -40,6 +40,7 @@ class HSIC(torch.nn.Module):
         if X.shape[0]!=self.n or Y.shape[0]!=self.n:
             raise ValueError("Number of samples should be equal",X.shape,Y.shape)
 
+        X,Y = X.to(DEVICE) , Y.to(DEVICE)
         if self.normalize:
             X = (X - X.mean(0))/X.std(0) ; Y = (Y-Y.mean(0))/Y.std(0)
 
@@ -67,6 +68,7 @@ class HSIC(torch.nn.Module):
         # therefore drop the sample that's too large
         if X.shape[0]!=self.n or Y.shape[0]!=self.n:
             raise ValueError("Number of samples should be equal",X.shape,Y.shape)
+        X,Y = X.to(DEVICE), Y.to(DEVICE)
         # useful constants
         H = torch.eye(self.n,self.n) - torch.ones(self.n,self.n)/self.n
         H = H.to(DEVICE)

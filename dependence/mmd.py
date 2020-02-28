@@ -12,7 +12,7 @@ class MMD(torch.nn.Module):
     def __init__(self,n_x, n_y, kernels=None, params=None,
                       unbiased=False, device=DEVICE):
         super(MMD, self).__init__()
-        if not isinstance(kernels,list):
+        if not isinstance(kernels,list) and kernels is not None:
             # assume unique element
             kernels = [kernels]
 
@@ -29,12 +29,14 @@ class MMD(torch.nn.Module):
 
         S = cross_average(n_x,n_y,unbiased)
         self.register_buffer('S', S)
+        self.to(DEVICE)
 
         self.n_x, self.n_y = n_x, n_y
         self.unbiased = unbiased
 
     def forward(self,X,Y):
         # think of M@M.t() as being block-wise [XX, XY; YX, YY]
+        X,Y = X.to(DEVICE), Y.to(DEVICE)
         M = torch.cat([X, Y], 0)
         self.K = self.KernelFunc(M)
         # use S to incorporate the MMD factors
@@ -45,9 +47,15 @@ class MMD(torch.nn.Module):
     def GammaProb(self,X,Y, alpha=0.05):
         ## test only defined for n_x = n_y,
         # therefore drop the sample that's too large
-        if self.n_x != self.n_y or not hasattr(self,'K'):
+        X,Y = X.to(DEVICE), Y.to(DEVICE)
+        if self.n_x != self.n_y:
             n = min(self.n_x,self.n_y)
             X, Y = X[:n,:], Y[:n,:]
+            M = torch.cat([X, Y], 0)
+            self.K = self.KernelFunc(M)
+
+        else:
+            n = self.n_x
             M = torch.cat([X, Y], 0)
             self.K = self.KernelFunc(M)
         # use S to incorporate the MMD factors
@@ -77,4 +85,5 @@ class MMD(torch.nn.Module):
         self.test_cdf = (lambda x: 1.0 - gamma.cdf(x, a=self.alpha, loc=0, scale=self.beta))
         self.test_thresh = gamma.ppf(1-alpha, a=self.alpha, loc=0, scale=self.beta)
         self.gamma_test_stat = statistic # not the same as stat, it is n*MMD^2 biased
+        self.pval = self.test_cdf(self.gamma_test_stat.clone().cpu().numpy())
         return self.gamma_test_stat, self.test_thresh

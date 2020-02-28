@@ -24,7 +24,7 @@ def split_data(P,Q,split_perc=0.5):
     return x_tr, y_tr, x_te, y_te
 
 
-def neural_net_c2st(P,Q, epochs=500, num_hiddens=20):
+def neural_net_c2st(P,Q, epochs=500, num_hiddens=20, return_test=False):
     x_tr, y_tr, x_te, y_te = split_data(P,Q)
     x_tr, y_tr, x_te, y_te = x_tr.type(dtype), y_tr.type(dtype),\
                              x_te.type(dtype), y_te.type(dtype)
@@ -52,7 +52,14 @@ def neural_net_c2st(P,Q, epochs=500, num_hiddens=20):
     # for len(P) >= 200 assume N(1/2, 1/4/n_te)
     cdf_val = torch.distributions.normal.Normal(0.5, math.sqrt(0.25/len(x_te))).cdf(acc)
 
-    return acc, 1 - cdf_val
+    if return_test:
+        # if true, we're looking to compute e.g. compression bounds
+        test = {'acc':acc,
+                'pval':1-cdf_val,
+                'params':[p.detach() for p in net.parameters()]}
+        return test
+    else:
+        return acc, 1 - cdf_val
 
 def distances(X,Y):
     '''X,Y contains vector observations X_i, Y_j as rows'''
@@ -61,7 +68,7 @@ def distances(X,Y):
     d += (Y * Y).sum(dim=1, keepdims=True).t().expand_as(d)
     return d
 
-def knn_c2st(P,Q, k=None):
+def knn_c2st(P,Q, k=None, return_test=False):
     x_tr, y_tr, x_te, y_te = split_data(P,Q)
     x_tr, y_tr, x_te, y_te = x_tr.type(dtype), y_tr.type(dtype),\
                              x_te.type(dtype), y_te.type(dtype)
@@ -78,7 +85,13 @@ def knn_c2st(P,Q, k=None):
             pred_te[i] = 1
     acc = (pred_te == y_te).float().mean()
     cdf_val = torch.distributions.normal.Normal(0.5, math.sqrt(0.25/len(x_te))).cdf(acc)
-    return acc, 1 - cdf_val
+    if return_test:
+        test = {'acc':acc,
+                'pval':1-cdf_val}
+        # what shoud we send to allow for decoding of y[1:n] | x[1:n] in the knn case?
+        return test
+    else:
+        return acc, 1 - cdf_val
 
 # to run quick tests in command line
 # import torch ; from dependence import c2st ; P,Q = torch.randn(550), torch.randn(550)

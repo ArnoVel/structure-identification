@@ -7,9 +7,9 @@ The initial example would fit 2d mixtures to jointly distributed data.
 
 ### Base example
 
-This corresponds to the initial example. We obtain the following, as expected
-
-![](./dim-two/base_ex_499its.png?raw=true)
+We naturally reproduced the original example (which can be thought of as confounded data).
+It can be found [in the pictures only repo](https://github.com/ArnoVel/causal-pictures/fitting/gmm/dim-two),
+as well as on the PyKeOps website.
 
 ### ANM example
 
@@ -19,12 +19,11 @@ only using its joint distribution?
 **Mixture of Uniforms as cause, spline mechanism:**  
 ![](./dim-two/anm_ex_mixtunif_spline.png?raw=true)
 
-**Mixture of Gaussians as cause, spline mechanism:**
-![](./dim-two/anm_ex_gmm_spline499.png?raw=true)
-
 **Uniform as cause, tanhSum mechanism:**
 ![](./dim-two/anm_ex_uniform_tanhsum499.png?raw=true)
 
+Additional examples can be found in the [in the pictures only repo](https://github.com/ArnoVel/causal-pictures/fitting/gmm/dim-two)
+or generated using `tests/test_gmm_fit` with anm data & the `dim=2` argument.
 
 ## One dimensional case
 
@@ -33,7 +32,6 @@ Our goal is to compute a reasonable approximation of the complexity of a distrib
 using the number of mixture components of a 'best' GMM approximation.
 This either corresponds to the number of modes of the distribution, or roughly
 to the complexity of the shape of the density.
-
 
 ### Two Triangles
 ![](./dim-one/triangles/sparsity_1/gmm_fit_iter499.png)

@@ -1,3 +1,7 @@
+####### FOR NOW ONLY COPY OF THRESHOLD TESTS.
+####### IN THE FUTURE, SHOULD CONTAIN POWER/LEVEL TESTS.
+
+
 import torch
 import numpy as np
 import matplotlib.pyplot as plt

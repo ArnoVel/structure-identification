@@ -339,7 +339,7 @@ def _get_test(P,Q, test_name, return_test=False):
         if return_test:
             return test
         else:
-            return test.gamma_test_stat, test.pval
+            return test.gamma_test_stat.flatten().item(), test.pval.flatten().item()
     elif test_name =='c2st-nn':
         return c2st.neural_net_c2st(P,Q, return_test=return_test)
     elif test_name=='c2st-knn':

@@ -148,7 +148,6 @@ def _compare_two_distplot(data1, data2, ax=None, mode=True,
         ax.axvline(get_mode_hist(data2)[0], color='darkred', linestyle='--',
                    linewidth=2, label=f'{distnames[1]} Mode')
 
-
 def _mult_reduce(intlist):
     res = 1;
     for i in intlist:

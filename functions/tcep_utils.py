@@ -20,14 +20,14 @@ def cut_num_pairs(data, num_max=1000,shuffle=False):
                 prm = np.random.permutation(n_pair)
                 pair[0] , pair[1] = pair[0][prm][:num_max] , pair[1][prm][:num_max]
             else:
-                 pair[0] , pair[1] = pair[0][:num_max] , pair[1][:num_max] 
+                 pair[0] , pair[1] = pair[0][:num_max] , pair[1][:num_max]
         # else:
         #   # need to upsample m points to make it a total of num_max
         #   n = pair[0].shape[0]
         #   s_X , s_Y = min(np.std(pair[0])*1e-3, 1) , min(np.std(pair[1])*1e-3, 1)
         #   m = num_max - n
         #   n_copy = m//n
-        #   remain = m - n_copy*n 
+        #   remain = m - n_copy*n
         #   cpX = [np.copy(pair[0]) for _ in range(n_copy)]
         #   cpY = [np.copy(pair[1]) for _ in range(n_copy)]
         #   cpX += [np.copy(pair[0][:remain])]
@@ -48,7 +48,7 @@ def ensemble_score(all_algos_scores):
     """
     n_pairs = all_algos_scores[0].shape[0]
     mean_scores = [np.mean([mt[i,:] for mt in all_algos_scores],0) for i in range(n_pairs)]
-    
+
     return mean_scores
 
 
@@ -106,7 +106,7 @@ def _all_predict(scores, threshold=0):
         rescaled by (S1+S2). The lower a score, the better.
         Is used whenever multiple tests are run in parallel,
         and the thresholding has to be made for all tests.
-        
+
         the decision is whether (S2-S1)/(S1+S2) > T or < -T
         """
     preds = []
@@ -289,7 +289,7 @@ def _build_scoredir(rootdir, crop=None, distsep='<'):
             elif distsep=='__':
                 dist_t = find_between(f,'__','__')
             score_dir[k][dist_t] = normalize_scores(check_nan(np.load(rootdir+f)))
-            
+
     return score_dir
 
 
@@ -302,7 +302,7 @@ def cut_low_density(pair, fracbins=50, axis=0):
     bincounts, bin_edges = np.histogram(pair[axis], bins=nbin)
     # nudge the last bin a tiny amout above the max value
     bin_edges[-1] = bin_edges[-1] + 1e-06
-    
+
     # bincount[i] is the counts between bin_edges[i],bin_edges[i+1]
     # we have bin_edges[indexes[i]-1] <= pair[axis][i] < bin_edges[indexes[i]]
 
@@ -338,7 +338,7 @@ def wraps_cutlowd(pair,direction='->'):
 
 
 # after deleting weights 52 53 54 55, 71 with weights 0 or "16 0"
-        
+
 TCEP_WEIGHTS = [0.166,0.166,0.167,0.166,0.143,0.143,
                 0.143,0.143,0.143,0.143,0.142,0.5,
                 0.25,0.25,0.25,0.25,0.5,1,1,0.166,

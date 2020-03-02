@@ -62,6 +62,8 @@ class MMD(torch.nn.Module):
         Kxx, Kxy, Kyx, Kyy = unblock_matrix(n,n,self.K)
         H = Kxx + Kyy - Kxy - Kyx
         statistic = H.sum() /n/n
+        if torch.isnan(statistic):
+            print(X,Y,n)
         # but we use the distribution of n*MMD^2
         statistic = n*statistic
         # under H0, what is the mean of the biased statistic?

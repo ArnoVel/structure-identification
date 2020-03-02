@@ -8,7 +8,7 @@ The initial example would fit 2d mixtures to jointly distributed data.
 ### Base example
 
 We naturally reproduced the original example (which can be thought of as confounded data).
-It can be found [in the pictures only repo](https://github.com/ArnoVel/causal-pictures/fitting/gmm/dim-two),
+It can be found [in the pictures only repo](https://github.com/ArnoVel/causal-pictures/tree/master/fitting/gmm/dim-two),
 as well as on the PyKeOps website.
 
 ### ANM example
@@ -22,7 +22,7 @@ only using its joint distribution?
 **Uniform as cause, tanhSum mechanism:**
 ![](./dim-two/anm_ex_uniform_tanhsum499.png?raw=true)
 
-Additional examples can be found in the [in the pictures only repo](https://github.com/ArnoVel/causal-pictures/fitting/gmm/dim-two)
+Additional examples can be found in the [in the pictures only repo](https://github.com/ArnoVel/causal-pictures/tree/master/fitting/gmm/dim-two)
 or generated using `tests/test_gmm_fit` with anm data & the `dim=2` argument.
 
 ## One dimensional case

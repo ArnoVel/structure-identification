@@ -51,4 +51,4 @@ c2st neural test: acc=0.5210000276565552, P(T>acc)=0.09206289052963257,  (reject
 c2st knn test: acc=0.4780000150203705, P(T>acc)=0.9179481267929077,  (reject if pval < 1e-02)
 ```
 
-We can see that causal and anticausal models are extremely likely in terms of KNN tests, while NN two sample testing. While in both cases the causal model is identified, it is only by a small margin (ratio of 0.93) for KNN, and large (ratio of 6.5) for the NN instantiation.
+We can see that causal and anticausal models are extremely likely in terms of KNN tests, while NN two sample testing shows a strong preference as Neural Networks tend to 'naturally' be better classifiers. While in both cases the causal model is identified, it is only by a small margin (ratio of 0.93) for KNN, and large (ratio of 6.5) for the NN instantiation.

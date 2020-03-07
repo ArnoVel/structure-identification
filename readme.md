@@ -6,9 +6,9 @@ which take as inputs bivariate data (point clouds) and attempt to infer a causal
 Good references on this topic are:
 
 * [A Very Comprehensive Benchmark](http://jmlr.org/papers/volume17/14-518/14-518.pdf) of methods using Additive Noise Models, and all the surrounding concepts
-* Several machine-learning using distribution embeddings have been designed: [RCC](https://arxiv.org/pdf/1409.4366.pdf), [KCDC](https://arxiv.org/pdf/1804.04622.pdf). A more statistical approach is [QCDC](https://arxiv.org/pdf/1801.10579.pdf) (copulas + quantile scores)
-* [The SLOPE algorithm](https://arxiv.org/pdf/1709.08915.pdf) is a framework using a set of basis functions and which iteratively weight goodness of fit and
-  function complexity. Various instantiations exist such as Slope-S, Slope-D, [an identifiable variant](https://eda.mmci.uni-saarland.de/pubs/2019/sloppy-marx,vreeken-wappendix.pdf), etc...
+* Several machine-learning algorithms using distribution embeddings have been designed: [RCC](https://arxiv.org/pdf/1409.4366.pdf), [KCDC](https://arxiv.org/pdf/1804.04622.pdf). A more statistical approach is [QCDC](https://arxiv.org/pdf/1801.10579.pdf) (copulas + quantile scores)
+* [The SLOPE algorithm](https://arxiv.org/pdf/1709.08915.pdf) is a framework assuming a set of basis functions, and iteratively weights goodness of fit and
+  function complexity to find the "best" model. Various instantiations exist such as Slope-S, Slope-D, [an identifiable variant](https://eda.mmci.uni-saarland.de/pubs/2019/sloppy-marx,vreeken-wappendix.pdf), etc...
   More information can be found in [their journal paper](https://link.springer.com/article/10.1007/s10115-018-1286-7)
 * [RECI](http://proceedings.mlr.press/v84/bloebaum18a/bloebaum18a.pdf) is a statistical approach based on regression, identifiable in the low noise setting
 * [IGCI](https://staff.science.uva.nl/j.m.mooij/articles/ai2012.pdf) Justifies a statistical approach in the case the relationship is deterministic and invertible. Additional material can be found in [their subsequent paper](https://arxiv.org/pdf/1402.2499.pdf).

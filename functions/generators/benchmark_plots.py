@@ -67,3 +67,7 @@ class BenchmarkBarPlot:
         self.fig.tight_layout()
         self.ax.legend(handles=self.bar_handles,bbox_to_anchor=(1, 1), ncol=2, fancybox=True, fontsize=12,)
         plt.show()
+
+
+class BenchmarkBoxPlots:
+    pass

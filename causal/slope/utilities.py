@@ -50,15 +50,16 @@ def _log(x, inplace=False):
             x_ = x.copy()
             idx = np.where(x_!=0)
             x_[idx] = np.log2(x_[idx])
+            return x_
     elif isinstance(x,numbers.Real):
         if x:
             x_ = np.log2(x)
         else:
-            pass
+            x_ = x
+        return x_
     else:
         raise NotImplementedError(complain,type(x))
 
-    return x_
 
 def _unique(x, return_counts=True):
     if isinstance(x,torch.Tensor):

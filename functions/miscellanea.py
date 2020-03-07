@@ -58,6 +58,7 @@ class GridDisplay:
         callback(ax)
         plt.xticks([], []); plt.yticks([], [])
         plt.tight_layout()
+        self.last_ax = ax
 
     def savefig(self,filepath, dpi=400):
         _plotter(filepath, dpi=dpi)

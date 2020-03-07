@@ -1,8 +1,10 @@
 import numpy as np
 import pandas as pd
 import h5py
+import torch
 from scipy.optimize import linprog
 import os
+from sklearn.metrics import auc
 
 # for computational load, cut the max number of pairs in TCEP
 def cut_num_pairs(data, num_max=1000,shuffle=False):
@@ -41,17 +43,6 @@ def cut_num_pairs(data, num_max=1000,shuffle=False):
         #   pair[1] = np.concatenate((pair[1] , upsample_Y+E_Y),axis=0)
 
 
-
-def ensemble_score(all_algos_scores):
-    """ given a list of p score matrices for TCEP, shape (n_pairs,2),
-        output the ensemble score, as the avg for each pair.
-    """
-    n_pairs = all_algos_scores[0].shape[0]
-    mean_scores = [np.mean([mt[i,:] for mt in all_algos_scores],0) for i in range(n_pairs)]
-
-    return mean_scores
-
-
 def _get_wd(sample_size):
     """ sets high regularization for low sample size """
     if sample_size < 200:
@@ -72,35 +63,58 @@ def _get_nc(sample_size):
     else:
         return 500
 
-def _acc_vs_thresh(scores,labels,test, weighted=True):
-      """ the test has to be be a binary thresholded test,
-      of the form: f(x) = 1 (if x>T)
-                          0 (if -T<x<T)
-                         -1 (if -T<x)
-      test is a callback such that label_preds = f(scores,thresh)"""
-      THRESH = np.arange(0,1,0.01)
-      labels = np.array(labels).ravel()
+def _sub_add_row_wise(scores):
+    ''' implements (x,y) --> (-x+y)/(x+y) for [N,2] arrays
+    '''
+    sub = np.array([-1,1]).reshape(-1,1) ; add = np.ones(shape=(2,1))
+    scalar_score = (scores @ sub) / (scores @ add)
 
-      # we compute for each thresh the acc & decision rate
-      res = []
-      for t in THRESH:
-            preds = np.array(test(scores,t)).ravel()
-            decision_index = [i for i,pred in enumerate(preds) if not pred==0]
-            dec_rate = len(decision_index) / float(len(preds))
-            compare = (preds == labels)[decision_index]
-            if weighted:
-                weights = TCEP_WEIGHTS[decision_index]
-                compare = compare*weights
-                normalize = sum(weights)
-            else:
-                normalize = len(compare)
-            acc = sum(compare)/max(1,normalize)
-            res.append([dec_rate, acc])
+    return scalar_score
 
-      return res
+def _threshold_three_ways(values, threshold=0):
+    results = np.where(values > threshold, 1, values)
+    results = np.where(results < -threshold, -1, results)
+    results = np.where((results < threshold) & (results > -threshold), 0, results)
+    return results
 
+def _preds_for_each_thresh(scores):
+    threshs = np.arange(0,1,1e-02)
+    # calling _threshold_three_ways() with a 1d array
+    # somehow appropriately produces all the thresholdings
+    ss = _sub_add_row_wise(scores)
+    results = _threshold_three_ways(ss,threshs)
+    # result is [N_scores,N_threshs]
+    return results
 
-def _all_predict(scores, threshold=0):
+def _accuracy_curve(scores, labels, weights=None):
+
+    assert len(scores) == len(labels)
+    labels = labels.reshape(-1,1) if (labels.ndim == 1) else labels
+    if weights is None:
+        weights = np.ones(len(labels)).reshape(-1,1)
+    elif weights.ndim == 1:
+        weights = weights.reshape(-1,1)
+
+    preds_matrix = _preds_for_each_thresh(scores)
+    labels = np.repeat(labels, preds_matrix.shape[1], axis=1)
+    weights = np.repeat(weights, preds_matrix.shape[1], axis=1)
+
+    num_nonzero_each_col = np.abs(preds_matrix).sum(0,keepdims=True)
+    weighted_counts_each_col = (np.abs(preds_matrix) * weights).sum(0,keepdims=True)
+    # if weights is one, num of nonzero for each col
+    decision_rate = num_nonzero_each_col / len(preds_matrix)
+    comp = (labels == preds_matrix).astype('float')
+    equals = (comp * weights).sum(0,keepdims=True)
+    # if weights are ones, is the # of pred==label per cols
+    # will only be one where it agrees, then divide by counts
+    accuracies = np.divide(equals,weighted_counts_each_col).ravel()
+    decision_rate = decision_rate.ravel()
+    acc_curve = np.vstack([decision_rate, accuracies]).T
+    acc_curve = np.where(np.isnan(acc_curve), 0, acc_curve)
+    acc_curve = acc_curve[ acc_curve[:,1] != 0 ]
+    return acc_curve
+
+def _threshold_score_pairs(scores, threshold=0):
     """ uses thresholding on pairs of similiarity scores [S1,S2]
         to make a decision. The scores are positive, and
         rescaled by (S1+S2). The lower a score, the better.
@@ -109,59 +123,26 @@ def _all_predict(scores, threshold=0):
 
         the decision is whether (S2-S1)/(S1+S2) > T or < -T
         """
-    preds = []
-    for S1,S2 in scores:
-        score = (S2 - S1)/(S2 + S1)
-        if score >= threshold:
-            preds.append([1])
-        elif score <= -threshold:
-            preds.append([-1])
-        else:
-            preds.append([0])
-    return preds
+    if isinstance(scores,list):
+        scores = np.array(scores)
+    elif isinstance(scores,torch.Tensor):
+        scores = scores.numpy()
 
-def acc_v_thresh_wrapper(scores,labels, weighted=True):
-    """wrapps _acc_vs_thresh to output (confidence,accuracy) pairs with
-        both confidence > 0, and sorted by increasing confidence"""
-    tot_acc_v_cfd_med = _acc_vs_thresh(scores,labels,test=_all_predict,
-                                      weighted=weighted)
-    tot_acc_v_cfd_med = np.array(tot_acc_v_cfd_med).reshape(-1,2)
-    cfd = tot_acc_v_cfd_med[:,0].ravel()
-    accs = tot_acc_v_cfd_med[:,1].ravel()
-    accs, cfd = accs[::-1] , cfd[::-1]
-    b = np.greater(accs, 0)
-    return cfd[b], accs[b]
+    assert isinstance(scores, np.ndarray)
+    assert (scores.shape[1] == 2) and (scores.ndim == 2)
 
+    scalar_score = _sub_add_row_wise(scores)
+    # sucessively set values > t to 1, values < -t to -1, and the rest to 0
+    results = _threshold_three_ways(scalar_score,threshold)
 
-## in case the scores are already combined
+    return results
 
-def thresh_test(s,t):
-    if s>t:
-        return 1.0
-    elif s< -t:
-        return -1.0
-    else:
-        return 0
-
-def thresh_preds(preds,labels, weighted=True):
-    THRESH = np.arange(0,1,0.01)
-    labels = np.array(labels).reshape(-1,1)
-    res = []
-    for t in THRESH:
-        thr_preds = np.array([thresh_test(p,t) for p in preds]).reshape(-1,1)
-        decision_index = [i for i,pred in enumerate(thr_preds) if not pred==0]
-        dec_rate = len(decision_index) / float(len(thr_preds))
-        compare = (thr_preds == labels)[decision_index].ravel()
-        if weighted:
-            weights = TCEP_WEIGHTS[decision_index]
-            compare = compare*weights
-            normalize = sum(weights)
-        else:
-            normalize = len(compare)
-        acc = sum(compare)/max(1,normalize)
-        res.append([dec_rate, acc])
-    res = np.array(res)
-    return res[:,0], res[:,1]
+def _area_under_acc_curve(scores,labels, weights=None):
+    ''' computes the area under the accuracy curve using sklearn.metrics.auc,
+        this underlying routine uses the trapezoidal rule
+    '''
+    acc_curve = _accuracy_curve(scores,labels, weights)
+    return auc(acc_curve[:,0], acc_curve[:,1])
 
 ## scores combination methods
 
@@ -221,7 +202,6 @@ def get_coeffs(allseps,lb):
     return np.array(score_coeffs)
 
 # file handling methods
-
 def _check_file_extension(filepath):
     fname = filepath.split('/')[-1]
     if '.npy' in fname:

@@ -115,7 +115,7 @@ class GaussianProcess(IGaussianProcess):
         self._L = torch.cholesky(self._K)
         self._K_inv = self._K.inverse()
 
-    def set_data(self, X, Y, normalize_y=True, reg=1e-5):
+    def set_data(self, X, Y, normalize_y=True, reg=1e-5, hsic_unbiased=False):
         """Set the training data.
         Args:
             X (Tensor): Training inputs.
@@ -129,11 +129,11 @@ class GaussianProcess(IGaussianProcess):
             Y_variance = torch.std(Y, dim=0)
             Y = (Y - Y_mean) / Y_variance
 
-        if self.loss_type == 'hsic':
-                self._hsic = HSIC(n=X.nelement(),unbiased=False)
+        if self.loss_type == 'hsic' or self.loss_type == 'hsic-gamma':
+                self._hsic = HSIC(n=X.shape[0],unbiased=hsic_unbiased)
 
-        self._X = X
-        self._Y = Y
+        self._X = X.double()
+        self._Y = Y.double()
         self._reg = reg
         self._update_k()
         self._is_set = True
@@ -146,7 +146,7 @@ class GaussianProcess(IGaussianProcess):
 
         Y = self._Y
         self._update_k()
-        K_inv = self._K_inv
+        K_inv = self._K_inv.double()
 
         # Compute the log likelihood.
         log_likelihood_dims = -0.5 * Y.t().mm(K_inv.mm(Y)).sum(dim=0)
@@ -162,6 +162,15 @@ class GaussianProcess(IGaussianProcess):
             _residuals = self._Y - _F ; _residuals = (_F - _residuals.mean(0)) / _residuals.std(0)
             indep_criterion = self._hsic(self._X, _residuals)
             return indep_criterion - nll_factor * log_likelihood
+
+        elif self.loss_type=="hsic-gamma":
+            # careful, as X is normalized, renormalize the predictions and residuals
+            _F = self(self._X) ; _F = (_F - _F.mean(0)) / _F.std(0)
+            _residuals = self._Y - _F ; _residuals = (_F - _residuals.mean(0)) / _residuals.std(0)
+            indep_criterion = self._hsic(self._X, _residuals)
+            # return n*MMD , which is used to perform gamma test
+            return self._X.shape[0]* indep_criterion - nll_factor * log_likelihood
+
         else:
             raise NotImplementedError("This loss type isn't yet implemented",self.loss_type)
 
@@ -220,7 +229,7 @@ class GaussianProcess(IGaussianProcess):
 
         return tuple(outputs)
 
-    def fit(self, tol=1e-6, reg_factor=10.0,
+    def fit(self, tol=1e-6, reg_factor=10.0, lr=1e-02,
                   max_reg=1.0, max_iter=1000, nll_factor=1.0):
         """Fits the model.
         Args:
@@ -228,14 +237,14 @@ class GaussianProcess(IGaussianProcess):
             reg_factor (float): Regularization multiplicative factor.
             max_reg (float): Maximum regularization term.
             max_iter (int): Maximum number of iterations.
-            nll_factor (float): if hsic, how to lagrange multiplier for nll
+            nll_factor (float): if hsic, how fix lagrange multiplier for nll
         Returns:
             Number of iterations.
         """
         if not self._is_set:
             raise RuntimeError("You must call set_data() first")
 
-        opt = torch.optim.Adam([p for p in self.parameters() if p.requires_grad], weight_decay=1e-04)
+        opt = torch.optim.Adam([p for p in self.parameters() if p.requires_grad], lr=lr, weight_decay=1e-04)
 
         while self._reg <= max_reg:
             try:
@@ -252,14 +261,22 @@ class GaussianProcess(IGaussianProcess):
                     curr_loss = self.loss()
                     dloss = curr_loss - prev_loss
                     n_iter += 1
-                    if dloss.abs() <= tol:
+                    # print(dloss) ; print(dloss / curr_loss)
+                    if (dloss/curr_loss).abs() <= tol:
                         break
 
                 return n_iter
-            except RuntimeError:
+
+            except RuntimeError as rt_err:
                 # Increase regularization term until it succeeds.
-                self._reg *= reg_factor
-                continue
+
+                if 'cholesky' in str(rt_err):
+                    self._reg *= reg_factor
+                    continue
+                else:
+                    print('no singular K, raising error')
+                    raise RuntimeError
+
 
         warnings.warn("exceeded maximum regularization: did not converge")
 

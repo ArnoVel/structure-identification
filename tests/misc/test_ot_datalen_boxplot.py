@@ -7,8 +7,6 @@ from itertools import product
 from os import listdir
 from functions.miscellanea import _write_nested, _plotter, GridDisplay
 
-
-
 def load_array(filepath):
     with open(filepath,'rb') as f:
         r = np.load(f)
@@ -170,6 +168,8 @@ def _tcep_all_hyperparams_lineplots_withdir():
         display.add_plot(callback = ( lambda  ax: _tcep_hyperparams_lineplots_withdir(x=xv, test=t, ax=ax)))
 
     plt.show()
+
+
 if __name__=='__main__':
     # _all_synthetic_boxplots()
     # _tcep_boxplots() ; plt.legend(bbox_to_anchor=(1,1) )
@@ -177,4 +177,6 @@ if __name__=='__main__':
     # various_boxplots_tcep_hyps_no_dir()
     # _tcep_hyperparams_lineplots_withdir()
     # plt.show()
-    _tcep_all_hyperparams_lineplots_withdir() ; plt.show()
+    #_tcep_all_hyperparams_lineplots_withdir() ; plt.show()
+    df = _aggregate_datasets(rescale_tests=True)
+    print(df[ (df['test'] == 'mmd-gamma') & (df['direction'] == r"$X\to Y$") & (df['max_iter_factor'] == 14) & (df['num_hiddens'] == 25)])

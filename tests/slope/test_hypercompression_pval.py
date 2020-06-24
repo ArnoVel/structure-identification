@@ -3,7 +3,6 @@ import numpy as np
 from scipy import stats,optimize
 import matplotlib.pyplot as plt
 import seaborn as sns
-import pprint as ppr
 from scipy.signal import argrelextrema, argrelmax
 
 from causal.slope.slope import SlopeFunction, _function_to_index, _index_to_function
@@ -27,7 +26,7 @@ N = 10000
 
 causes = ['gmm', 'subgmm','supgmm','subsupgmm','uniform','mixtunif']
 base_noises = ['normal', 'student', 'triangular', 'uniform',
-               'beta', 'semicircular']
+               'beta']
 mechanisms = ['spline','sigmoidam','tanhsum','rbfgp']
 anms = [False, True]
 

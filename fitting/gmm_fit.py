@@ -85,6 +85,21 @@ class GaussianMixture(Module):
         #       through a soft, concave penalization on the class weights.
         return -log_likelihood + self.sparsity * softmax(self.w, 0).sqrt().mean()
 
+
+    def train(self, sample, num_iters=200, lr=1e-01):
+        """ trains the model by maximizing the (penalized) log likelihood """
+        self.loss = np.zeros(num_iters)
+        self.optimizer = torch.optim.Adam(self.parameters(), lr=lr)
+
+        for iter in range(num_iters):
+            self.optimizer.zero_grad()  # Reset the gradients (PyTorch syntax...).
+            cost = self.neglog_likelihood(sample)  # Cost to minimize.
+            #print(cost)
+            cost.backward()  # Backpropagate to compute the gradient.
+            self.optimizer.step()
+
+            self.loss[iter] = cost.data.cpu().numpy()
+
     def plot(self, sample, ax=None):
         """Displays the model."""
         if ax == None:
@@ -109,7 +124,11 @@ class GaussianMixture(Module):
         if self.D==2:
             # Create a uniform grid on the unit square:
             res = 1000
-            xlow,ylow,xhi,yhi = sample[:,0].min(), sample[:,1].min(), sample[:,0].max(), sample[:,1].max()
+            xlow,ylow,xhi,yhi = sample[:,0].min() - sample[:,0].std(),\
+                                sample[:,1].min() - sample[:,1].std(),\
+                                sample[:,0].max() + sample[:,0].std(),\
+                                sample[:,1].max() + sample[:,1].std()
+
             xlow,ylow,xhi,yhi = xlow.cpu().numpy(),ylow.cpu().numpy(),xhi.cpu().numpy(),yhi.cpu().numpy()
             xticks,yticks = np.linspace(xlow,xhi, res + 1)[:-1],\
                             np.linspace(ylow,yhi, res + 1)[:-1]
@@ -125,7 +144,7 @@ class GaussianMixture(Module):
             scale = np.amax(np.abs(heatmap[:]))
             ax.imshow(-heatmap, interpolation='bilinear', origin='lower',
                        vmin=-scale, vmax=scale, cmap=cm.RdBu,
-                       extent=(0,1,0,1))
+                       extent=(xlow,xhi,ylow,yhi))
 
             # Log-contours:
             log_heatmap = self.log_likelihoods(grid)
@@ -135,7 +154,7 @@ class GaussianMixture(Module):
             levels = np.linspace(-scale, scale, 41)
 
             ax.contour(log_heatmap, origin='lower', linewidths=1., colors="#C8A1A1",
-                        levels=levels, extent=(0,1,0,1))
+                        levels=levels, extent=(xlow,xhi,ylow,yhi))
 
             # Scatter plot of the dataset:
             xy = sample.data.cpu().numpy()

@@ -44,10 +44,19 @@ slope_f = SlopeFunction(num_functions=nofc)
 _res_best_i = slope_f._find_best_fit_index(x,y_n)
 
 pp.pprint(_res_best_i)
+resolution = _set_resolution(x)
+data_len = _gaussian_score_emp_sse(_res_best_i['sse'], len(x), resolution=resolution)
+
+print(f'data-length using gaussian noise model (func of sse): {data_len}, with probability {np.exp(-data_len)}')
+
 
 _res_best_mixed = slope_f._find_best_mixed_fit(x,y_n)
 
 pp.pprint(_res_best_mixed)
+resolution = _set_resolution(x)
+data_len = _gaussian_score_emp_sse(_res_best_mixed['sse'], len(x), resolution=resolution)
+
+print(f'data-length using gaussian noise model (func of sse): {data_len}, with probability {np.exp(-data_len)}')
 
 plt.plot(x.sort().values,y_disp[x.sort().indices], 'k--', label='True function')
 plt.scatter(x,y_n,facecolor='none', edgecolor='r', alpha=0.5)

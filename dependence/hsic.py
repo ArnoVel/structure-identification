@@ -2,7 +2,7 @@ import torch
 from scipy.stats import gamma
 from functions.kernels import RBF, SumIdentical, SumKernels
 from functions.operations import (block_matrix, cross_average,
-                                  unblock_matrix, numpy)
+                                  unblock_matrix, numpify)
 
 DEVICE = 'cuda:0' if torch.cuda.is_available() else 'cpu:0'
 defaults = [{'bandwidth':10**(i)} for i in range(-2,2)]
@@ -15,6 +15,10 @@ class HSIC(torch.nn.Module):
                     kernels_X=None, params_X=None,
                     kernels_Y=None, params_Y=None,
                     unbiased=False, device=DEVICE):
+        ''' expects for each R.V a list of kernels and parameters
+            in order to combine them into a sum kernel.
+            This allows for a single kernel, or any kernel from functions.kernels
+        '''
         super(HSIC, self).__init__()
 
         params_X = params_X if params_X is not None else defaults
@@ -89,8 +93,9 @@ class HSIC(torch.nn.Module):
 
         meanHSIC = (c_x*c_y + mean_x*mean_y - c_y*mean_x - c_x*mean_y) / self.n
         self.mean, self.var = meanHSIC, varHSIC
-        self.alpha, self.beta = numpy(meanHSIC**2/varHSIC), numpy(self.n*varHSIC/meanHSIC)
+        self.alpha, self.beta = numpify(meanHSIC**2/varHSIC), numpify(self.n*varHSIC/meanHSIC)
         self.test_cdf = (lambda x: 1.0 - gamma.cdf(x, a=self.alpha, loc=0, scale=self.beta))
-        self.test_thresh = gamma.ppf(1-alpha, a=self.alpha, loc=0, scale=self.beta)
-        self.gamma_test_stat = statistic # not the same as stat, it is n*HSIC biased
+        self.test_thresh = gamma.ppf(1-alpha, a=self.alpha, loc=0, scale=self.beta).ravel()
+        self.gamma_test_stat = numpify(statistic) # not the same as stat, it is n*HSIC biased
+        self.pval = self.test_cdf(self.gamma_test_stat)
         return self.gamma_test_stat, self.test_thresh

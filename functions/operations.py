@@ -1,7 +1,10 @@
 import torch
 
-def numpy(tensor):
-    return tensor.detach().cpu().numpy()
+def numpify(tensor):
+    if isinstance(tensor,torch.Tensor):
+        return tensor.detach().cpu().numpy()
+    else:
+        return tensor
 
 def block_matrix(A,B,C,D):
     ''' returns [A,B; C,D] if dims match'''

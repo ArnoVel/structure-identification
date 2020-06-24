@@ -132,7 +132,7 @@ def viz_pair(save=True):
     np.random.seed(SEED)
     causes = ['gmm', 'subgmm','supgmm','subsupgmm','uniform','mixtunif']
     base_noises = ['normal', 'student', 'triangular', 'uniform',
-                   'beta', 'semicircular']
+                   'beta']
     mechanisms = ['spline','sigmoidam','tanhsum','rbfgp']
     anms = [False, True]
 
@@ -164,13 +164,13 @@ def viz_pair(save=True):
             plt.show()
 
 
-def viz_confouded(save=True):
+def viz_confounded(save=True):
     SEED = 1020
     torch.manual_seed(SEED)
     np.random.seed(SEED)
     causes = ['gmm', 'subgmm','supgmm','subsupgmm','uniform','mixtunif']
     base_noises = ['normal', 'student', 'triangular', 'uniform',
-                   'beta', 'semicircular']
+                   'beta']
     mechanisms = ['spline','sigmoidam','tanhsum','rbfgp']
     anms = [ False,True]
 
@@ -201,7 +201,9 @@ def viz_confouded(save=True):
             plt.show()
 
 if __name__ == '__main__':
-    #viz_cause()
-    #viz_mechanisms()
-    #viz_pair(save=True)
-    viz_confouded(save=False)
+    # uncomment any to visualize samples
+    # viz_cause()
+    # viz_mechanisms()
+    # viz_pair(save=True)
+    # viz_confounded(save=False)
+    pass

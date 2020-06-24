@@ -3,6 +3,7 @@ import pandas as pd
 import h5py
 import torch
 from scipy.optimize import linprog
+from scipy.stats import binom_test
 import os
 from sklearn.metrics import auc
 
@@ -54,7 +55,6 @@ def _get_wd(sample_size):
     else:
         return 1e-4
 
-
 def _get_nc(sample_size):
     if sample_size < 500:
         return 1000
@@ -66,9 +66,15 @@ def _get_nc(sample_size):
 def _sub_add_row_wise(scores):
     ''' implements (x,y) --> (-x+y)/(x+y) for [N,2] arrays
     '''
+    # avoid (0,0) score pairs which lead to NaN scores; equal really low values..
+    scores[scores==0] = 1e-06
     sub = np.array([-1,1]).reshape(-1,1) ; add = np.ones(shape=(2,1))
     scalar_score = (scores @ sub) / (scores @ add)
 
+    if np.isnan(scalar_score).any():
+        print("NaN found in scalar scores")
+        print(scores[np.repeat(np.isnan(scalar_score),2,axis=1)])
+        print(scalar_score[np.isnan(scalar_score)])
     return scalar_score
 
 def _threshold_three_ways(values, threshold=0):
@@ -98,7 +104,6 @@ def _accuracy_curve(scores, labels, weights=None):
     preds_matrix = _preds_for_each_thresh(scores)
     labels = np.repeat(labels, preds_matrix.shape[1], axis=1)
     weights = np.repeat(weights, preds_matrix.shape[1], axis=1)
-
     num_nonzero_each_col = np.abs(preds_matrix).sum(0,keepdims=True)
     weighted_counts_each_col = (np.abs(preds_matrix) * weights).sum(0,keepdims=True)
     # if weights is one, num of nonzero for each col
@@ -169,6 +174,21 @@ def check_nan(scores):
 def scores_to_sep(scores):
     return np.abs(scores[:,1] - scores[:,0])
 
+
+# critical values for accuracy curve
+def binom_critical_value(n,p=0.5,alpha=0.05):
+    ''' given n,p ; return the max i s.t P[Binom(n,p) > i] < alpha.
+        Cannot use ppf, as it gives least i s.t above is true
+    '''
+    i = n
+    while binom_test(i,n,p) < alpha:
+        i -= 1
+    return i
+
+def _critical_curve(max_n):
+    critical_values = np.array([binom_critical_value(n)/n for n in range(1,max_n+1)])
+    decision_rates = np.arange(1,max_n+1) / max_n
+    return decision_rates, critical_values
 
 # methods for LP combination of scores
 

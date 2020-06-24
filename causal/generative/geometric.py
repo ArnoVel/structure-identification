@@ -13,6 +13,7 @@ from dependence import c2st, mmd
 use_cuda = torch.cuda.is_available()
 dtype    = torch.cuda.FloatTensor if use_cuda else torch.FloatTensor
 
+
 class CausalGenGeomNet:
     def __init__(self,loss="sinkhorn", p=2, blur=1e-01, lr=5e-02, scaling=0.7,
                  max_iter_factor=5, num_hiddens=20):
@@ -73,7 +74,7 @@ class CausalGenGeomNet:
         self._XY_hat_causal = torch.cat( [self._X, self._Y_hat], 1)
         self._XY_hat_anticausal = torch.cat( [self._X_hat, self._Y], 1)
 
-    def fit_two_directions(self):
+    def fit_two_directions(self, display=False):
         ''' fits the two networks using the same number of epochs '''
 
         self._fcm_net_causal.train() ; self._fcm_net_anticausal.train()
@@ -90,7 +91,7 @@ class CausalGenGeomNet:
             loss_causal.backward() ; loss_anticausal.backward()
             self.optim_causal.step() ; self.optim_anticausal.step()
 
-            if i and not i%50:
+            if (i and not i%50) and display:
                 print(f' optim step #{i}: Loss X->Y is {loss_causal.data} | Loss Y->X is {loss_anticausal.data}')
 
         self.trained = True
@@ -162,7 +163,7 @@ class CausalGenGeomNet:
 # a base class for a single task of distribution regression X-->Y
 class GenerativeGeomNet:
     def __init__(self,loss="sinkhorn", p=2, blur=1e-01, lr=5e-02, scaling=0.7,
-                 max_iter_factor=5, num_hiddens=20):
+                 max_iter_factor=5, num_hiddens=20, weight_decay=1e-04):
         ''' Only one geometric generative model.
             scaling refers to the sinkhorn loop iterations inside GeomLoss's SamplesLoss,
             and all other arguments are related to networks/SamplesLoss.
@@ -172,7 +173,7 @@ class GenerativeGeomNet:
         # see: https://www.kernel-operations.io/geomloss/_auto_examples/sinkhorn_multiscale/plot_epsilon_scaling.html
         self.num_iters = int(max_iter_factor/lr) +1 ; self.max_iter_factor = max_iter_factor
         self.lr = lr ; self.loss = loss ; self.p = p ; self.blur = blur ; self.scaling = scaling
-        self.num_hiddens = num_hiddens
+        self.num_hiddens = num_hiddens ; self.weight_decay = weight_decay
         self.trained = False ; self.data_is_set = False
 
         self._net = torch.nn.Sequential(torch.nn.Linear(2,self.num_hiddens),
@@ -182,7 +183,7 @@ class GenerativeGeomNet:
                                         torch.nn.Linear(self.num_hiddens,1))
 
         self._L = SamplesLoss(loss=self.loss, p=self.p, blur=self.blur, scaling=self.scaling)
-        self._opt = torch.optim.Adam(self._net.parameters(), lr=self.lr)
+        self._opt = torch.optim.Adam(self._net.parameters(), lr=self.lr, weight_decay=self.weight_decay)
 
 
     def set_data(self,X,Y):
@@ -205,7 +206,7 @@ class GenerativeGeomNet:
         self._Y_hat = self._net( torch.cat( [self._X, self._net.noise], 1 ) )
         self._XY_hat = torch.cat( [self._X, self._Y_hat], 1)
 
-    def train(self, num_iters=None):
+    def train(self, num_iters=None, display_loss=False):
         ''' The number of training iterations defaults to 1/lr * max_iter_factor
             (given at init). This can be changed by passing the num_iters argument()
         '''
@@ -218,7 +219,7 @@ class GenerativeGeomNet:
             loss = self._L(self._XY, self._XY_hat)
             loss.backward() ; self._opt.step()
 
-            if i and not i%50:
+            if (i and not i%50) and display_loss:
                 print(f' optim step #{i}: Loss is {loss.data}')
         self.trained = True
 
@@ -232,7 +233,7 @@ class GenerativeGeomNet:
         self._net.register_buffer('noise',torch.Tensor(len(self._X), 1))
         self._net = self._net.type(dtype)
         self._L = SamplesLoss(loss=self.loss, p=self.p, blur=self.blur, scaling=self.scaling)
-        self._opt = torch.optim.Adam(self._net.parameters(), lr=self.lr)
+        self._opt = torch.optim.Adam(self._net.parameters(), lr=self.lr, weight_decay=self.weight_decay)
 
 
     def data_probability(self, test_type="mmd-gamma", num_tests=1):

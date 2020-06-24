@@ -25,6 +25,7 @@ class RBF(torch.nn.Module):
         self.bandwidth = tensorize(bandwidth)
         # whether to compute the pairwise dists
         self.precompute = precompute
+        self.params = {'bandwidth':self.bandwidth}
 
     def forward(self,X):
         if self.precompute:
@@ -40,6 +41,7 @@ class Matern(torch.nn.Module):
         self.bandwidth = tensorize(bandwidth)
         self.nu = nu
         self.precompute = precompute
+        self.params = {'bandwidth':self.bandwidth, 'nu':self.nu}
 
     def forward(self,X):
         if self.precompute:
@@ -64,6 +66,7 @@ class RQ(torch.nn.Module):
         self.bandwidth = tensorize(bandwidth)
         self.alpha = tensorize(alpha)
         self.precompute = precompute
+        self.params = {'bandwidth':self.bandwidth, 'alpha':self.alpha}
 
     def forward(self,X):
         if self.precompute:
@@ -93,6 +96,9 @@ class SumKernels(torch.nn.Module):
             SK += k(G)
         return SK
 
+    def get_params(self):
+        return [k.params for k in self.kernels]
+
 class SumIdentical(torch.nn.Module):
     ''' implements the sum of the same type of kernel, with different hyperparameters'''
     def __init__(self, kernel, params):
@@ -102,6 +108,9 @@ class SumIdentical(torch.nn.Module):
 
     def forward(self, X):
         return self.SumK(X)
+
+    def get_params(self):
+        return self.SumK.get_params()
 
     # no methods to implement, the forward is simply
     # a SumRBF forward

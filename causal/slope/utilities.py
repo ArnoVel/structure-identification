@@ -4,6 +4,8 @@ import numbers
 from cdt.data import load_dataset
 from sklearn.metrics import mean_squared_error
 import math
+from numba import jit
+
 # have global values
 RESOLUTION = 1e-02
 data , labels = load_dataset('tuebingen',shuffle=False)
@@ -321,6 +323,7 @@ def _parameter_score(params, thresh=1000):
             summand = summand + 1 + _log_n(_ceil(p_temp_)) + _log_n(precision_)
     return summand
 
+
 def _margin_score(x, type='uniform'):
     if type=='uniform':
         resolution = _set_resolution(x)
@@ -401,3 +404,33 @@ def _ref_func(x):
 
 def _fit_comparison(model_):
     pass
+
+
+### some numba optimized versions of above code
+def _nan_to_zero_jit(x):
+
+    assert isinstance(x,np.ndarray)
+
+    idx = np.where(np.isnan(x))
+    x[idx] = 0
+    return x
+
+# not much faster, as object mode must be forced due to python subroutines
+# inside the function body ...
+@jit(nopython=False, forceobj=True)
+def _parameter_score_jit(params, thresh=1000):
+    summand = 0
+    params_ = _nan_to_zero(params)
+    for p in params_:
+        p_abs_ = _abs(p)
+        p_temp_ = p_abs_
+        precision_ = 1.0
+        # choice of SLOPE authors: don't encode 0.
+        # if we follow the original paper, it is possible
+        # to encode 0 and negative ints too... not that important
+        if p!=0:
+            while (p_temp_ < thresh):
+                p_temp_ = p_temp_ * 10
+                precision_ = precision_ + 1
+            summand = summand + 1 + _log_n(_ceil(p_temp_)) + _log_n(precision_)
+    return summand

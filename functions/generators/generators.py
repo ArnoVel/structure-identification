@@ -1,7 +1,6 @@
 import numpy as np
 import scipy as sp
 import torch
-from scipy.stats import semicircular
 from functions.regressors.gp.models import GaussianProcess
 from functions.regressors.gp.kernels import RBFKernel, WhiteNoiseKernel
 import scipy.interpolate as itpl
@@ -211,7 +210,8 @@ class MechanismSampler(object):
         def fun(X):
             d = X.reshape(-1,1) + c.reshape(1,-1)
             # once we have [N,num_tanhs] , the broadcasting will be automatic
-            return (np.tanh(b*d)*a).sum(1) + X*1e-02
+            f_val = (np.tanh(b*d)*a).sum(1).reshape(-1,1) + X.reshape(-1,1)*1e-02
+            return f_val.ravel()
         return fun
 
 class NoiseSampler(object):
@@ -225,7 +225,7 @@ class NoiseSampler(object):
         self.base_noise = base_noise
 
         noise_list = ['normal', 'student', 'triangular', 'uniform',
-                       'beta', 'semicircular']
+                       'beta']
         if base_noise not in noise_list:
             raise NotImplementedError(f"base noise requested ({base_noise}) not in list: {noise_list}")
 
@@ -250,9 +250,6 @@ class NoiseSampler(object):
             al = rd.randint(2,6,1)
             # similar to pert distribution
             base_noise_sample = rd.beta(al,al, size=self.n)*2 - 0.5
-        elif self.base_noise == 'semicircular':
-            # same as beta with 3/2 al, and centered at 0
-            base_noise_sample = semicircular.rvs(size=self.n) * 0.8 # too big var apparently..
 
         if self.anm:
             effect = self.effect_sample

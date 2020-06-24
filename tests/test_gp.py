@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 from functions.regressors.gp.models import GaussianProcess
 from functions.regressors.gp.kernels import RBFKernel, WhiteNoiseKernel
-from functions.operations import numpy
+from functions.operations import numpify
 from dependence.hsic import HSIC
 import torch.distributions as tdist
 
@@ -29,12 +29,12 @@ def lapgauss(n, sigma=1):
 def plot_variance(gp, x, f,y , title=None, std_factor=1.0):
     mu, std = gp(x, return_std=True)
     std *= std_factor
-    mu = numpy(mu).ravel()
-    std = numpy(std).ravel()
+    mu = numpify(mu).ravel()
+    std = numpify(std).ravel()
 
-    x = numpy(x).ravel()
-    y = numpy(y).ravel()
-    f = numpy(f).ravel()
+    x = numpify(x).ravel()
+    y = numpify(y).ravel()
+    f = numpify(f).ravel()
     idx = np.argsort(x)
 
     plt.scatter(x[idx], y[idx], label="Sampled points",
@@ -56,9 +56,9 @@ def print_residual_test(gp, X, Y):
     hsic = HSIC(n=residuals.nelement(),unbiased=False)
 
     stat, statgam, threshgam, pval = [
-                        numpy(hsic(X,residuals)).ravel(),
+                        numpify(hsic(X,residuals)).ravel(),
                        *hsic.GammaProb(X,residuals, alpha=0.05),
-                        hsic.test_cdf(numpy(hsic.gamma_test_stat).ravel())
+                        hsic.test_cdf(numpify(hsic.gamma_test_stat).ravel())
                         ]
     print((f"Test for X indep Y-f(X) ;\n"+
            f"statistic:{stat},\n" +

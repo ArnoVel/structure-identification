@@ -9,6 +9,7 @@ import torch
 from geomloss import SamplesLoss
 from functions.generators.generators import *
 from functions.miscellanea import _write_nested, _plotter, GridDisplay
+from functions.operations import numpify
 from dependence import c2st
 from causal.generative.geometric import CausalGenGeomNet,GenerativeGeomNet
 from causal.slope.utilities import _log, _parameter_score
@@ -22,7 +23,7 @@ dtype    = torch.cuda.FloatTensor if use_cuda else torch.FloatTensor
 
 print(f'Using cuda? {"yes" if use_cuda else "no"}, data type is then {dtype}')
 
-def _score_wrapper(net):
+def _torch_param_score_wrapper(net):
     param_flat = torch.cat([p.detach().flatten() for p in net.parameters()])
     return _parameter_score(param_flat)
 
@@ -43,7 +44,7 @@ def anm_data(N,dim=2, SEED=1020):
     seed(SEED)
     causes = ['gmm', 'subgmm','supgmm','subsupgmm','uniform','mixtunif']
     base_noises = ['normal', 'student', 'triangular', 'uniform',
-                   'beta', 'semicircular']
+                   'beta']
     mechanisms = ['spline','sigmoidam','tanhsum','rbfgp']
 
     global c,bn,m
@@ -139,24 +140,32 @@ def two_dims_fit():
     gradient_flow( SamplesLoss(**loss_info) , lr=5e-02, loss_info=loss_info)
     plt.show()
 
-def test_geom_nets(XY):
+def profile_geom_nets(XY, max_iter_factor=5, p=1, num_hiddens=20):
+
     XY = XY.type(dtype); X,Y = XY[:,0].clone(), XY[:,1].clone()
-    causal_geom_net = CausalGenGeomNet(loss="sinkhorn", p=1)
+    causal_geom_net = CausalGenGeomNet(loss="sinkhorn", p=p, max_iter_factor=max_iter_factor, num_hiddens=num_hiddens)
     causal_geom_net.set_data(X,Y)
     causal_geom_net.fit_two_directions()
 
     for t in ["mmd-gamma","c2st-nn","c2st-knn"]:
         data_prob = causal_geom_net.data_probability(test_type=t, num_tests=5)
-        print(f'obtained -log(likelihood) for test {t}: causal {-_log(data_prob[0])} vs. anticausal {-_log(data_prob[1])}')
+        neg_lop_probs = [-_log(p) for p in data_prob]
+        print(f'obtained -log(likelihood) for test {t}: causal {neg_lop_probs[0]} vs. anticausal {neg_lop_probs[1]}')
+        print(f'NLL delta:  {np.abs(numpify( neg_lop_probs[0] - neg_lop_probs[1] ))}')
+
     test_losses = causal_geom_net.test_loss()
     print(f'test loss bits with exp likelihood: causal {-_log(torch.exp(-test_losses[0]))} vs. anticausal {-_log(torch.exp(-test_losses[1]))}')
-    print(f'parameter compression: X --> Y {_score_wrapper(causal_geom_net._fcm_net_causal)}')
-    print(f'parameter compression: Y --> X {_score_wrapper(causal_geom_net._fcm_net_anticausal)}')
+    param_scores = (_torch_param_score_wrapper(causal_geom_net._fcm_net_causal),
+                    _torch_param_score_wrapper(causal_geom_net._fcm_net_anticausal)
+                    )
+    print(f'parameter compression: X --> Y {param_scores[0]}')
+    print(f'parameter compression: Y --> X {param_scores[1]}')
+    print(f'parameter compression delta: {np.abs(numpify(param_scores[0] - param_scores[1]))}')
 
 def _sample_anms_geom_nets(N=5):
     causes = ['gmm', 'subgmm','supgmm','subsupgmm','uniform','mixtunif']
     base_noises = ['normal', 'student', 'triangular', 'uniform',
-                   'beta', 'semicircular']
+                   'beta']
     mechanisms = ['spline','sigmoidam','tanhsum','rbfgp']
 
     for c,m,bn in product(causes, mechanisms, base_noises):
@@ -174,9 +183,9 @@ def _sample_anms_geom_nets(N=5):
         print('\n ----------- end anm type -----------\n')
 
 
-def visualize_geom_net(XY):
+def visualize_geom_net(XY, max_iter_factor=5, p=1, num_hiddens=20):
     XY = XY.type(dtype); X,Y = XY[:,0].clone(), XY[:,1].clone()
-    geom_net = GenerativeGeomNet(loss="sinkhorn", p=1)
+    geom_net = GenerativeGeomNet(loss="sinkhorn", p=p, max_iter_factor=max_iter_factor, num_hiddens=num_hiddens)
     geom_net.set_data(X,Y)
     geom_net.plot_training_samples()
 
@@ -185,12 +194,13 @@ def visualize_geom_net(XY):
     print(f'c2st neural test: acc={nnt[0]}, P(T>acc)={nnt[1]},  (reject if pval < 1e-02)')
     print(f'c2st knn test: acc={knnt[0]}, P(T>acc)={knnt[1]},  (reject if pval < 1e-02)')
 
-    print(f'parameter compression: {_score_wrapper(geom_net._net)}')
+    print(f'parameter compression: {_torch_param_score_wrapper(geom_net._net)}')
 
 
-N, M = (100, 100) if not use_cuda else (1000, 1000) # if not same # pts for D1 D2
-XY = anm_data(N, dim=2, SEED=22) #Y_j = data(N, dim=2)
-# causal_fit()
-# _sample_anms_geom_nets(N=5)
-# visualize_geom_net(XY)
-test_geom_nets(XY)
+if __name__=='__main__':
+    N, M = (100, 100) if not use_cuda else (1000, 1000) # if not same # pts for D1 D2
+    XY = anm_data(N, dim=2, SEED=1) #Y_j = data(N, dim=2)
+    # causal_fit()
+    # _sample_anms_geom_nets(N=5)
+    visualize_geom_net(XY, max_iter_factor=1, num_hiddens=10)
+    #profile_geom_nets(XY, max_iter_factor=1, num_hiddens=10)

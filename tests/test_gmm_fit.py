@@ -17,7 +17,7 @@ np.random.seed(SEED)
 dtype = torch.cuda.FloatTensor if torch.cuda.is_available() else torch.FloatTensor
 # set dimension
 dim = 2
-N = 10000  # Number of samples
+N = 1000  # Number of samples
 # data
 def data(N,dim=2):
     if dim==2:
@@ -40,6 +40,7 @@ def anm_data(N,dim=2):
 
         y = mech(x.numpy()); y = torch.from_numpy(y).view(-1,1)
         delta_f = (y.max() - y.min()) * 0.1
+        print(x.shape, y.shape, delta_f.shape)
         e = delta_f * torch.randn(x.shape) ; y_n = y+e
 
         y_n = (y_n-y_n.mean(0))/y_n.std(0)
@@ -100,6 +101,7 @@ def callback(ax, iter, dim, low, up):
     plt.tight_layout() ; plt.pause(.05)
 
 ## Main training loop
+print(x.shape)
 
 for iter in range(num_iters):
     optimizer.zero_grad()  # Reset the gradients (PyTorch syntax...).
@@ -116,13 +118,18 @@ for iter in range(num_iters):
                                                     iter=iter,
                                                     low=low,
                                                     up=up)))
+    print(iter)
 
-display.savefig(f'./tests/data/fitting/gmm/dim-two/anm_ex_uniform_tanhsum{iter}')
+print('Loss over iterations:')
+plt.show()
+plt.plot(loss)
+plt.show()
+# display.savefig(f'./tests/data/fitting/gmm/dim-two/anm_ex_uniform_tanhsum{iter}')
 
-qualifying_weights = (lambda t: [w for w in softmax(model.w, 0).detach().cpu().numpy() if w>t])
-ref = qualifying_weights(1e-04); avg = sum(ref)/len(ref)
-counts, weights, relweights = [1 for w in qualifying_weights(1e-04)],\
-                              [w for w in qualifying_weights(1e-04)],\
-                              [np.sqrt(w)/avg for w in qualifying_weights(1e-04)]
-print(counts,weights)
-print(sum(counts), sum(relweights))
+# qualifying_weights = (lambda t: [w for w in softmax(model.w, 0).detach().cpu().numpy() if w>t])
+# ref = qualifying_weights(1e-04); avg = sum(ref)/len(ref)
+# counts, weights, relweights = [1 for w in qualifying_weights(1e-04)],\
+#                               [w for w in qualifying_weights(1e-04)],\
+#                               [np.sqrt(w)/avg for w in qualifying_weights(1e-04)]
+# print(counts,weights)
+# print(sum(counts), sum(relweights))

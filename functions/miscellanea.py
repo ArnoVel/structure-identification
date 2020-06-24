@@ -6,7 +6,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.signal import argrelextrema, argrelmax
 import seaborn as sns
-import pprint as ppr
 import torch
 import imageio
 

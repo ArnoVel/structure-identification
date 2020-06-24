@@ -5,8 +5,8 @@ from functions.operations import block_matrix, cross_average, unblock_matrix
 
 DEVICE = 'cuda:0' if torch.cuda.is_available() else 'cpu:0'
 
-def numpy(tensor):
-    return tensor.cpu().numpy()
+def numpify(tensor):
+    return tensor.detach().cpu().numpy()
 
 class MMD(torch.nn.Module):
     def __init__(self,n_x, n_y, kernels=None, params=None,
@@ -82,7 +82,7 @@ class MMD(torch.nn.Module):
         var = (2/(n*(n-1)))* (H*H).sum()/(n*(n-1))
         # gamma distribution for n*MMD^2
         # use scipy as no icdf gamma in torch
-        self.alpha, self.beta = numpy(mean**2/var), numpy(n*var/mean)
+        self.alpha, self.beta = numpify(mean**2/var), numpify(n*var/mean)
         #print(f'mean: {mean}, var: {var}, alpha:{self.alpha}, beta:{self.beta}')
         self.test_cdf = (lambda x: 1.0 - gamma.cdf(x, a=self.alpha, loc=0, scale=self.beta))
         self.test_thresh = gamma.ppf(1-alpha, a=self.alpha, loc=0, scale=self.beta)

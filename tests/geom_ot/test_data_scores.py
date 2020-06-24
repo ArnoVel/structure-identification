@@ -31,7 +31,6 @@ def _score_wrapper(net):
     return _parameter_score(param_flat)
 
 def enumerate_all_anms():
-    # avoid semicircular, 24 less combinations and quite similar to Beta(a,a)
     causes = ['gmm', 'subgmm','supgmm','subsupgmm','uniform','mixtunif']
     base_noises = ['normal', 'student', 'triangular', 'uniform',
                    'beta']

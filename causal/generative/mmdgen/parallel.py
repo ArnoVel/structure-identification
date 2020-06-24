@@ -34,7 +34,8 @@ from multiprocessing import Manager
 from time import sleep
 import os
 from joblib import Parallel, delayed
-from Settings import SETTINGS
+
+from .Settings import SETTINGS
 
 
 def worker_subprocess(function, devices, lockd, results, lockr,

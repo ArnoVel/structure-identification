@@ -1,8 +1,9 @@
-
-from Settings import SETTINGS
 import numpy as np
 from scipy.stats import ttest_ind
 import torch as th
+
+from .Settings import SETTINGS
+
 
 # courtesy of https://github.com/Diviyan-Kalainathan/
 

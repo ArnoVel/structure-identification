@@ -3,15 +3,16 @@ import torch as th
 from tqdm import trange
 from torch.utils.data import Dataset, DataLoader, TensorDataset
 from sklearn.preprocessing import scale
-from model import PairwiseModel
-from loss import MMDloss
+from pandas import DataFrame, Series
+import os
 from scipy import integrate as itg
 from scipy.stats.mstats import hdquantiles
 
-from Settings import SETTINGS
-from parallel import parallel_run
-from pandas import DataFrame, Series
-import os
+from .Settings import SETTINGS
+from .loss import MMDloss
+from .model import PairwiseModel
+from .parallel import parallel_run
+
 
 # courtesy of https://github.com/Diviyan-Kalainathan/
 
@@ -96,8 +97,8 @@ class CausalMmdNet(PairwiseModel):
         self._data = [th.Tensor(scale(th.Tensor(i).view(-1, 1))) for i in data]
         #print([d.shape for d in data])
         self._data = TensorDataset(self._data[0].to(self.device) , self._data[1].to(self.device))
-        self.dataloader = DataLoader(   data, batch_size=self.batch_size,
-                                        shuffle=True, drop_last=True)
+        self.dataloader = DataLoader(   self._data, batch_size=self.batch_size,
+                                        shuffle=False, drop_last=False)
 
         # reset for every pair
         self._fcm_net_causal.reset_parameters()
@@ -108,12 +109,12 @@ class CausalMmdNet(PairwiseModel):
 
         self.data_is_set = True
 
-    def fit_two_directions(self, data, train_epochs=1000, idx='no index'):
+    def fit_two_directions(self, train_epochs=1000, idx='no index'):
         ''' fits the two networks using the same number of epochs '''
 
         self._fcm_net_causal.train() ; self._fcm_net_anticausal.train()
 
-        bar = trange(train_epochs)
+        pbar = trange(train_epochs)
 
         for epoch in pbar:
             for i, (_X, _Y) in enumerate(self.dataloader):
@@ -199,7 +200,6 @@ class CausalMmdNet(PairwiseModel):
         for epoch in pbar:
             # the generator splits each into batches theoretically, in practice full dataset
             for (_X, _Y_hat) , (_X_hat, _Y) in self.generate_both_models():
-
                 _XY = th.cat((_X, _Y), 1)
 
                 _XY_hat_causal = th.cat( (_X, _Y_hat) ,1)
@@ -207,6 +207,7 @@ class CausalMmdNet(PairwiseModel):
 
                 loss_causal = self._fcm_net_causal.criterion(_XY, _XY_hat_causal)
                 loss_anticausal = self._fcm_net_anticausal.criterion(_XY, _XY_hat_anticausal)
+
 
                 self.te_loss_causal.append(loss_causal.detach().cpu().numpy())
                 self.te_loss_anticausal.append(loss_anticausal.detach().cpu().numpy())
@@ -306,6 +307,7 @@ class CausalMmdNet(PairwiseModel):
 
         if not hasattr(self, 'mmd_score_causal') or not hasattr(self, 'mmd_score_anticausal'):
             self.mmd_scores(500) # base 500 te_epochs
+            mmd_causal, mmd_anticausal = self.mmd_score_causal, self.mmd_score_anticausal
         else:
             mmd_causal, mmd_anticausal = self.mmd_score_causal, self.mmd_score_anticausal
 
@@ -313,17 +315,14 @@ class CausalMmdNet(PairwiseModel):
         score_causal = mmd_causal + beta*penalty_causal
         score_anticausal = mmd_anticausal + beta*penalty_anticausal
 
-        _total = score_causal+score_anticausal
+        # print(f"mmd: c={mmd_causal}, ac={mmd_anticausal}")
+        # print(f"penalty: c={penalty_causal}, ac={penalty_anticausal}")
+        # print(f"scores before norm: c={score_causal}, ac={score_anticausal}")
 
+        _total = score_causal+score_anticausal
         score_causal /= _total ; score_anticausal /= _total
 
-        return score_causal, score_causal
-
-
-
-
-
-
+        return score_causal, score_anticausal
 
     def save_checkpoint(self,filepath,chkpt_epoch,idx=0, nrun=0):
         param_desc = '_'.join((
@@ -433,9 +432,9 @@ def qscore(quantiles, probs, y_sample):
 
         #print(quants.shape, diffs.shape, qs.shape)
         # also need the  - probs * (q - condexp)
-        diff_mean = - probs.reshape(-1,1) * (_quants - y_sample.mean(0)*np.ones(_quants.shape))
+        _diff_mean = - probs.reshape(-1,1) * (_quants - y_sample.mean(0)*np.ones(_quants.shape))
 
         # each element is q_i - y_j  , and we only keep positive elements,
         # corresponding to the constraint: fixing q_i, only sum those y s.t q_i >= y
         # then sum up the row over all cols, corresponding to the average quantile residuals
-        return qs.mean(1) + diff_mean.ravel()
+        return _qs.mean(1) + _diff_mean.ravel()
